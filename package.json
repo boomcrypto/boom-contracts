@@ -1,0 +1,44 @@
+{
+  "name": "clarity-boom-pool",
+  "version": "0.1.0",
+  "author": "RunRiot <help@riot.ai> (https://riot.ai)",
+  "repository": "https://gitlab.com/riot.ai/clarity-boom-pool.git ",
+  "private": true,
+  "scripts": {
+    "test": "mocha",
+    "test:watch": "mocha --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^10",
+    "typescript": "^3.5.2",
+    "ts-node": "^8.2.0",
+    "chai": "^4.2.0",
+    "chai-string": "^1.5.0",
+    "@types/chai": "^4.1.7",
+    "mocha": "^6.1.4",
+    "@types/mocha": "^5.2.7"
+  },
+  "dependencies": {
+    "@stacks/network": "^1.1.1-alpha.0",
+    "@stacks/transactions": "^1.1.1-alpha.0",
+    "@blockstack/clarity": "^0.3.7",
+    "@blockstack/clarity-native-bin": "^0.3.7"
+  },
+  "engines": {
+    "node": ">= 12.18",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.21.1"
+  },
+  "mocha": {
+    "require": [
+      "ts-node/register/transpile-only",
+      "source-map-support/register"
+    ],
+    "extension": [
+      "ts",
+      "clar"
+    ],
+    "timeout": 0,
+    "recursive": true
+  }
+}
