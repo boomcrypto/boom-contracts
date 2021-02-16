@@ -82,6 +82,16 @@ describe("boom pool beta nfts", () => {
     return client.submitQuery(query);
   };
 
+  const getLastTokenId = async () => {
+    const query = await client.createQuery({
+      method: {
+        name: "last-token-id",
+        args: [],
+      },
+    });
+    return client.submitQuery(query);
+  };
+
   const delegateStackStxCommit = async (
     ids: number[],
     sender: string,
@@ -225,6 +235,12 @@ describe("boom pool beta nfts", () => {
       );
     });
 
+    it("should return the correct last token id", async () => {
+      const lastId = await getLastTokenId();
+      expect(lastId.success, JSON.stringify(lastId)).to.be.true;
+      expect(JSON.stringify(lastId.result)).is.equal('"(ok u1)"');
+    });
+
     it("should fund bond", async () => {
       const result = await fundBond(8, ADDR4);
       expect(result.success, JSON.stringify(result)).is.true;
@@ -260,7 +276,7 @@ describe("boom pool beta nfts", () => {
       const result = await payout(10, [1, 2], ADDR3);
       expect(result.success).is.true;
       expect(result.result).to.startWith(
-        "Transaction executed and committed. Returned: (tuple (result ((ok true) (err u12))) (reward-ustx u10) (stx-from ST1HB1T8WRNBYB0Y3T7WXZS38NKKPTBR3EG9EPJKR) (total-ustx u10000))"
+        `Transaction executed and committed. Returned: (tuple (result ((ok true) (err u12))) (reward-ustx u10) (stx-from ${ADDR3}) (total-ustx u10000))`
       );
       const balance2 = await getBalance(ADDR2);
       expect(balance2.result).to.equal("u10");
@@ -291,7 +307,7 @@ describe("boom pool beta nfts", () => {
       const result = await claimBond([1, 2], ADDR2);
       expect(result.success, JSON.stringify(result)).is.true;
       expect(result.result).to.startWith(
-        "Transaction executed and committed. Returned: (tuple (result ((err u3) (err u12))) (reward-ustx u0) (stx-from STRYYQQ9M8KAF4NS7WNZQYY59X93XEKR31JP64CP.boom-pool-beta-nft) (total-ustx u10000))"
+        `Transaction executed and committed. Returned: (tuple (result ((err u3) (err u12))) (reward-ustx u0) (stx-from ${ADDR4}.boom-pool-beta-nft) (total-ustx u10000))`
       );
     });
   });

@@ -40,6 +40,7 @@
     (let
       ((id (+ u1 (var-get last-id))))
         (begin
+          (var-set last-id id)
           (match (pox-delegate-stx amount-ustx until-burn-ht)
             success-pox
                 (match (nft-mint? boom-pool-beta id stacker)

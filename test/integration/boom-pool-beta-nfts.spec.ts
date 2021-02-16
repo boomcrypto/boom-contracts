@@ -4,7 +4,7 @@ import { describe } from "mocha";
 import { deployContract, user, mainnet, mocknet } from "../deploy";
 import { ADDR1, testnetKeyMap } from "../mocknet";
 
-const contractName = mainnet ? "boom-pool-beta-nfts" : "boom-pool-beta-nfts-v0";
+const contractName = mainnet ? "boom-pool-beta-nfts" : "boom-pool-beta-nfts-v1";
 
 const userPrivate = mainnet
   ? user.private
