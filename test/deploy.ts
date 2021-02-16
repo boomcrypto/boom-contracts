@@ -4,20 +4,21 @@
 import {
   broadcastTransaction,
   makeContractDeploy,
+  makeSTXTokenTransfer,
   StacksTransaction,
   TxBroadcastResultOk,
   TxBroadcastResultRejected,
 } from "@stacks/transactions";
 import { StacksMainnet, StacksTestnet } from "@stacks/network";
-
 import * as fs from "fs";
+const BN = require("bn.js");
 const fetch = require("node-fetch");
 
-import { ADDR1, testnetKeyMap } from "./mocknet";
+import { ADDR1, ADDR2, ADDR3, ADDR4, testnetKeyMap } from "./mocknet";
 
 export const local = true;
 export const mocknet = true;
-export const noSidecar = true;
+export const noSidecar = false;
 export const mainnet = false;
 
 const STACKS_CORE_API_URL = local
@@ -82,6 +83,18 @@ export async function deployContract(
     network,
   });
   console.log(`deploy contract ${contractName}`);
+  return handleTransaction(transaction);
+}
+
+export async function faucetCall(recipient: string, amount: number) {
+  console.log("init wallet");
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount: new BN(amount),
+    senderKey: testnetKeyMap[ADDR4].private,
+    network,
+  });
+
   return handleTransaction(transaction);
 }
 
