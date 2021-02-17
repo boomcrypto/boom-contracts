@@ -154,10 +154,15 @@
 (define-public (payout (reward-ustx uint) (nfts (list 750 uint)))
   (if (and (> burn-block-height (end-of-cycle)) (>= reward-ustx (stx-get-balance (as-contract tx-sender))))
       (let ((total-ustx (get-total-stacked-ustx nfts)))
-        (let ((result (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, result: (list)}))))
-          (match (as-contract (stx-transfer? (stx-get-balance tx-sender) tx-sender pool-account))
-            success result
-            error (err error))))
+        (let ((result (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, result: (list)})))
+          (contract-balance (as-contract (stx-get-balance tx-sender)))
+        )
+          (if (> contract-balance u0)
+            (match (as-contract (stx-transfer? (stx-get-balance tx-sender) tx-sender pool-account))
+              success result
+              error (err error))
+            result
+          )))
     (err err-call-not-allowed)))
 
 (define-read-only (get-total-stacked)
