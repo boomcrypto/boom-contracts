@@ -242,7 +242,7 @@ describe("boom pool beta nfts", () => {
       expect(JSON.stringify(lastId.result)).is.equal('"(ok u1)"');
     });
 
-    it("should not mint another nft", async () => {
+    it("should mint nft even though user owns one already", async () => {
       const result = await joinPool(ADDR2, 20000, 100);
       expect(result.success).is.true;
       expect(result.result).to.startWith(
@@ -251,6 +251,17 @@ describe("boom pool beta nfts", () => {
       const owner2 = await getOwner(2);
       expect(owner2.success).is.true;
       expect(owner2.result).is.equal(`(ok (some ${ADDR2}))`);
+    });
+
+    it("should not mint another nft when user stacks already", async () => {
+      const result = await joinPool(ADDR2, 10000, 100);
+      expect(result.success).is.true;
+      expect(result.result).to.startWith(
+        "Transaction executed and committed. Returned: true"
+      );
+      const lastId = await getLastTokenId();
+      expect(lastId.success, JSON.stringify(lastId)).to.be.true;
+      expect(JSON.stringify(lastId.result)).is.equal('"(ok u2)"');
     });
 
     it("should return the correct last token id", async () => {
@@ -294,12 +305,12 @@ describe("boom pool beta nfts", () => {
       const result = await payout(10, [1, 2, 3], ADDR3);
       expect(result.success).is.true;
       expect(result.result).to.startWith(
-        `Transaction executed and committed. Returned: (tuple (result ((ok true) (ok true) (err u12))) (reward-ustx u10) (stx-from ${ADDR3}) (total-ustx u30000))`
+        `Transaction executed and committed. Returned: (tuple (result ((ok true) (ok true) (err u12))) (reward-ustx u10) (stx-from ${ADDR3}) (total-ustx u20000))`
       );
       const balance2 = await getBalance(ADDR2);
-      expect(balance2.result).to.equal("u10009");
+      expect(balance2.result).to.equal("u20010");
       const balance3 = await getBalance(ADDR3);
-      expect(balance3.result).to.equal("u9991"); // initial balance - reward
+      expect(balance3.result).to.equal("u9990"); // initial balance - reward
       const balance4 = await getBalance(ADDR4);
       expect(balance4.result).to.equal("u10000"); // initial balance - bond + bond
     });
@@ -325,7 +336,7 @@ describe("boom pool beta nfts", () => {
       const result = await claimBond([1, 2, 3], ADDR2);
       expect(result.success, JSON.stringify(result)).is.true;
       expect(result.result).to.startWith(
-        `Transaction executed and committed. Returned: (tuple (result ((err u3) (err u3) (err u12))) (reward-ustx u0) (stx-from ${ADDR4}.boom-pool-beta-nft) (total-ustx u30000))`
+        `Transaction executed and committed. Returned: (tuple (result ((err u3) (err u3) (err u12))) (reward-ustx u0) (stx-from ${ADDR4}.boom-pool-beta-nft) (total-ustx u20000))`
       );
     });
   });

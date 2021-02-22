@@ -5,7 +5,7 @@
 (define-constant reward-cycle-length u50)
 (define-constant grace-period-length u10)
 
-(define-constant err-map-insert-failed u10)
+(define-constant err-map-function-failed u10)
 (define-constant err-var-set-failed u11)
 (define-constant err-invalid-asset-id u12)
 (define-constant err-no-asset-owner u13)
@@ -26,6 +26,35 @@
     (stacked-ustx (optional uint))
     (reward (optional uint))))
 
+(define-map lookup principal uint)
+
+(define-private (new-stacker-delegate-stx (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
+  (let
+    ((id (+ u1 (var-get last-id))))
+      (var-set last-id id)
+      (match (pox-delegate-stx amount-ustx until-burn-ht)
+        success-pox
+            (match (nft-mint? boom-pool-beta id stacker)
+              success-mint
+                (begin
+                  (map-insert lookup stacker id)
+                  (if (map-insert meta id
+                      {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: none, until-burn-ht: until-burn-ht, reward: none})
+                    (ok true)
+                    (err err-map-function-failed)))
+              error-minting (err error-minting))
+        error-pox (err error-pox))))
+
+
+(define-private (old-stacker-delegate-stx (stacker-id uint) (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
+  (match (pox-delegate-stx amount-ustx until-burn-ht)
+    success-pox
+      (if (map-set meta stacker-id
+                {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: none, until-burn-ht: until-burn-ht, reward: none})
+        (ok true)
+        (err err-map-function-failed))
+    error-pox (err error-pox)))
+
 (define-private (pox-delegate-stx (amount-ustx uint) (until-burn-ht (optional uint)))
   (if (> amount-ustx u100)
     (let ((result-revoke (contract-call? 'ST000000000000000000002AMW42H.pox revoke-delegate-stx)))
@@ -37,20 +66,9 @@
 
 (define-public (delegate-stx (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
   (if (or (is-eq stacker tx-sender) (is-eq stacker contract-caller))
-    (let
-      ((id (+ u1 (var-get last-id))))
-        (begin
-          (var-set last-id id)
-          (match (pox-delegate-stx amount-ustx until-burn-ht)
-            success-pox
-                (match (nft-mint? boom-pool-beta id stacker)
-                  success-mint
-                    (if (map-insert meta id
-                        {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: none, until-burn-ht: until-burn-ht, reward: none})
-                      (ok true)
-                      (err err-map-insert-failed))
-                  error-minting (err error-minting))
-            error-pox (err error-pox))))
+    (match (map-get? lookup stacker)
+      stacker-id (old-stacker-delegate-stx stacker-id stacker amount-ustx until-burn-ht pox-addr)
+      (new-stacker-delegate-stx stacker amount-ustx until-burn-ht pox-addr))
     (err err-delegate-invalid-stacker)))
 
 ;; function for pool admins
