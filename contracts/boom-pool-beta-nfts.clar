@@ -135,8 +135,8 @@
         (if (var-set total-stacked total)
           (match (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit pox-address reward-cycle)
             success (ok success)
-            error (err (to-uint error)))
-          (err err-var-set-failed))))))
+            error (err {kind: "native-pox-failed", code: (to-uint error), details: details}))
+          (err {kind: "native-var-set-failed", code: err-var-set-failed, details: details}))))))
 
 (define-read-only (nft-details (nft-id uint))
   (ok {amount-ustx: (unwrap! (get amount-ustx (map-get? meta nft-id)) (err err-invalid-asset-id)),
@@ -235,7 +235,7 @@
 (define-read-only (get-nft-meta)
   {uri: "https://boom.money/images/boom-pool.png", name: "Boom Stacking Pool Beta", mime-type: "image/png"})
 
-(define-read-only (last-token-id)
+(define-read-only (get-last-token-id)
   (ok (var-get last-id)))
 
 (define-read-only  (last-token-id-raw)

@@ -86,7 +86,7 @@ describe("boom pool beta nfts", () => {
   const getLastTokenId = async () => {
     const query = await client.createQuery({
       method: {
-        name: "last-token-id",
+        name: "get-last-token-id",
         args: [],
       },
     });
