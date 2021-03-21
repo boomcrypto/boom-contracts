@@ -9,23 +9,23 @@
     "test:watch": "mocha --watch"
   },
   "devDependencies": {
-    "@types/node": "^10",
-    "typescript": "^3.5.2",
-    "ts-node": "^8.2.0",
-    "chai": "^4.2.0",
+    "@types/node": "^14",
+    "typescript": "^4.2.3",
+    "ts-node": "^9.1.1",
+    "chai": "^4.3.4",
     "chai-string": "^1.5.0",
-    "@types/chai": "^4.1.7",
-    "mocha": "^6.1.4",
-    "@types/mocha": "^5.2.7"
+    "@types/chai": "^4.2.15",
+    "mocha": "^8.3.2",
+    "@types/mocha": "^8.2.2"
   },
   "dependencies": {
     "@stacks/network": "^1.2.2",
-    "@stacks/transactions": "^1.2.2",
-    "@blockstack/clarity": "^0.3.7",
-    "@blockstack/clarity-native-bin": "^0.3.7"
+    "@stacks/transactions": "^1.3.3",
+    "@blockstack/clarity": "^0.3.9",
+    "@blockstack/clarity-native-bin": "^0.3.9"
   },
   "engines": {
-    "node": ">= 12.18",
+    "node": ">= 14",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
   },

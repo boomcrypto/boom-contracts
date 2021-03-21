@@ -26,3 +26,6 @@
 (define-public (revoke-delegate-stx)
   (ok true)
 )
+
+(define-public (allow-contract-caller (contract principal) (until-burn-ht (optional uint)))
+  (ok true))

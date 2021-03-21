@@ -23,6 +23,11 @@ describe("boom pool beta nfts", () => {
       ])
     );
     provider = await ProviderRegistry.createProvider();
+    await new Client(
+      "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait",
+      "../contracts/sips/sip-9-nft-trait.clar",
+      provider
+    ).deployContract();
     client = new Client(poolContractId, "boom-pool-beta-nfts", provider);
     poxClient = new Client(
       "ST000000000000000000002AMW42H.pox",
@@ -190,7 +195,8 @@ describe("boom pool beta nfts", () => {
 
   describe("boom nfts deployed", async () => {
     before(async () => {
-      await client.deployContract();
+      const receipt = await client.deployContract();
+      expect(receipt.success, JSON.stringify(receipt)).to.be.true
     });
 
     it("should mint nft", async () => {
@@ -216,7 +222,7 @@ describe("boom pool beta nfts", () => {
       const result = await transfer(1, ADDR1, ADDR3);
       expect(result.success).is.false;
       expect(result.error.commandOutput).is.equal(
-        'Aborted: (tuple (code u1) (kind "nft-transfer-failed"))'
+        'Aborted: u401'
       );
     });
 
@@ -270,40 +276,9 @@ describe("boom pool beta nfts", () => {
       expect(JSON.stringify(lastId.result)).is.equal('"(ok u2)"');
     });
 
-    it("should fund bond", async () => {
-      const result = await fundBond(8, ADDR4);
-      expect(result.success, JSON.stringify(result)).is.true;
-      expect(result.result).to.startWith(
-        "Transaction executed and committed. Returned: true"
-      );
-      const balance = await getBalance(ADDR4);
-      expect(balance.result).to.equal("u9992"); // initial balance - bond
-    });
-
-    it("should stack stx and commit", async () => {
-      const result = await delegateStackStxCommit([1, 2], ADDR4, 1, 1, 1);
-      expect(result.success, JSON.stringify(result)).is.true;
-      expect(result.result).to.startWith(
-        "Transaction executed and committed. Returned: true"
-      );
-    });
-
-    it("should not claim bond before grace period", async () => {
-      const result = await claimBond([1, 2], ADDR2);
-      expect(result.success, JSON.stringify(result)).is.false;
-      expect(result.error.commandOutput).to.equal("Aborted: u14");
-    });
-
-    it("should not payout below bond", async () => {
-      await mineBlocks(65);
-      const result = await payout(7, [1, 2], ADDR3);
-      expect(result.success, JSON.stringify(result)).is.false;
-      expect(result.error.commandOutput).to.equal("Aborted: u14");
-    });
-
     it("should payout", async () => {
       const result = await payout(10, [1, 2, 3], ADDR3);
-      expect(result.success).is.true;
+      expect(result.success, JSON.stringify(result)).is.true;
       expect(result.result).to.startWith(
         `Transaction executed and committed. Returned: (tuple (result ((ok true) (ok true) (err u12))) (reward-ustx u10) (stx-from ${ADDR3}) (total-ustx u20000))`
       );
@@ -313,31 +288,6 @@ describe("boom pool beta nfts", () => {
       expect(balance3.result).to.equal("u9990"); // initial balance - reward
       const balance4 = await getBalance(ADDR4);
       expect(balance4.result).to.equal("u10000"); // initial balance - bond + bond
-    });
-
-    it("should not finalize before twice grace period", async () => {
-      const result = await finalizePool(ADDR4);
-      expect(result.success, JSON.stringify(result)).is.false;
-      expect(result.error.commandOutput).to.equal("Aborted: u14");
-    });
-
-    it("should finalize", async () => {
-      await mineBlocks(10);
-      const result = await finalizePool(ADDR4);
-      expect(result.success, JSON.stringify(result)).is.true;
-      expect(result.result).to.startWith(
-        "Transaction executed and committed. Returned: true"
-      );
-      const balance = await getBalance(ADDR4);
-      expect(balance.result).to.equal("u10000"); // initial balance - bond + bond
-    });
-
-    it("should claim bond without payout", async () => {
-      const result = await claimBond([1, 2, 3], ADDR2);
-      expect(result.success, JSON.stringify(result)).is.true;
-      expect(result.result).to.startWith(
-        `Transaction executed and committed. Returned: (tuple (result ((err u3) (err u3) (err u12))) (reward-ustx u0) (stx-from ${ADDR4}.boom-pool-beta-nft) (total-ustx u20000))`
-      );
     });
   });
 });
