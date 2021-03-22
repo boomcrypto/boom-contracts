@@ -42,39 +42,31 @@
                 (begin
                   (map-insert lookup stacker id)
                   (if (map-insert meta id
-                      {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: none, until-burn-ht: until-burn-ht, reward: none})
+                      {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: (some (get lock-amount success-pox)), until-burn-ht: until-burn-ht, reward: none})
                     (ok true)
                     (err err-map-function-failed)))
               error-minting (err error-minting))
         error-pox (err error-pox))))
 
-
-(define-private (old-stacker-delegate-stx (stacker-id uint) (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
-  (match (pox-delegate-stx amount-ustx until-burn-ht)
-    success-pox
-      (if (map-set meta stacker-id
-                {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: none, until-burn-ht: until-burn-ht, reward: none})
-        (ok true)
-        (err err-map-function-failed))
-    error-pox (err error-pox)))
-
 (define-private (pox-delegate-stx (amount-ustx uint) (until-burn-ht (optional uint)))
   (if (> amount-ustx u100)
     (let ((result-revoke (contract-call? 'ST000000000000000000002AMW42H.pox revoke-delegate-stx))
-          (start-block-ht (+ u100 u1))) ;; (+ burn-block-height u1)
+          (start-block-ht (+ burn-block-height u1)))
       (match (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stx amount-ustx pool-account until-burn-ht none)
-        success (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stack-stx tx-sender amount-ustx pool-pox-address start-block-ht u1))
-          stack-success (ok stack-success)
-          stack-error (err (to-uint stack-error)))
+        success
+          (let ((stacker tx-sender))
+            (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stack-stx stacker amount-ustx pool-pox-address start-block-ht u1))
+              stack-success (ok stack-success)
+              stack-error (err (to-uint stack-error))))
         error (err (to-uint error))
       ))
     (err err-delegate-below-minimum)))
 
 (define-public (delegate-stx (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
-  (if (or (is-eq stacker tx-sender) (is-eq stacker contract-caller))
-    (match (map-get? lookup stacker)
-      stacker-id (old-stacker-delegate-stx stacker-id stacker amount-ustx until-burn-ht pox-addr)
-      (new-stacker-delegate-stx stacker amount-ustx until-burn-ht pox-addr))
+  (if (and
+        (or (is-eq stacker tx-sender) (is-eq stacker contract-caller)) 
+        (is-none (map-get? lookup stacker)))
+      (new-stacker-delegate-stx stacker amount-ustx until-burn-ht (some pool-pox-address))
     (err err-delegate-invalid-stacker)))
 
 ;; function for pool admins
@@ -106,31 +98,9 @@
       reward: (get reward entry)})
     false))
 
-(define-private (delegate-stack-stx (nft uint) (context (tuple
-                      (start-burn-ht uint)
-                      (pox-address (tuple (hashbytes (buff 20)) (version (buff 1))))
-                      (lock-period uint))))
-  (let
-    ((pox-address (get pox-address context))
-    (start-burn-ht (get start-burn-ht context))
-    (lock-period (get lock-period context)))
-  (match (map-get? meta nft)
-    entry (let ((stack-amount (get-stack-amount entry)))
-            (if (update-meta nft stack-amount)
-              (match (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stack-stx
-                          (get stacker entry)
-                          stack-amount
-                          pox-address start-burn-ht lock-period)
-                stacker-details (ok stacker-details)
-                error (err {kind: "native-function-failed", code: (to-uint error)}))
-              (err {kind: "native-map-insert-failed", code: nft})))
-    (err {kind: "invalid-argument", code: err-invalid-asset-id}))))
-
-(define-public (stack-aggregation-commit 
-          (pox-address (tuple (hashbytes (buff 20)) (version (buff 1))))
-          (reward-cycle uint))
+(define-public (stack-aggregation-commit (reward-cycle uint))
   (if (is-eq tx-sender pool-deployer)
-  (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit pox-address reward-cycle))
+  (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit pool-pox-address reward-cycle))
     success (ok success)
     error (err {kind: "native-pox-failed", code: (to-uint error)}))
     (err {kind: "permission-denied", code: err-call-not-allowed})))

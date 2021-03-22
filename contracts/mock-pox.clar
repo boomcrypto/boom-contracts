@@ -1,10 +1,14 @@
+(define-map stackers principal bool)
 (define-public (delegate-stack-stx
   (stacker principal) (amount-ustx uint)
   (pox-addr (tuple (hashbytes (buff 20)) (version (buff 1))))
   (start-burn-ht uint)
   (lock-period uint))
-  (if true
-    (ok {lock-amount: amount-ustx, stacker: stacker, unlock-burn-height: (+ start-burn-ht u100)})
+  (if (is-none (print (map-get? stackers stacker)))
+    (begin
+      (map-set stackers stacker true)
+      (ok {lock-amount: amount-ustx, stacker: stacker, unlock-burn-height: (+ start-burn-ht u100)}))
+
     (err 1))
 )
 
