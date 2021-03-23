@@ -160,7 +160,7 @@ describe("boom pool beta nfts", () => {
       const result = await joinPool(ADDR1, 10000, 100);
       expect(result.success, JSON.stringify(result)).is.true;
       expect(result.result).to.startWith(
-        "Transaction executed and committed. Returned: true"
+        "Transaction executed and committed. Returned: u1"
       );
       const owner1 = await getOwner(1);
       expect(owner1.success).is.true;
@@ -207,7 +207,7 @@ describe("boom pool beta nfts", () => {
       const result = await joinPool(ADDR2, 20000, 100);
       expect(result.success).is.true;
       expect(result.result).to.startWith(
-        "Transaction executed and committed. Returned: true"
+        "Transaction executed and committed. Returned: u2"
       );
       const owner2 = await getOwner(2);
       expect(owner2.success).is.true;
@@ -243,7 +243,7 @@ describe("boom pool beta nfts", () => {
       const balance1 = await getBalance(ADDR1);
       expect(balance1.result).to.equal("u20000"); // 10k locked
       const balance2 = await getBalance(ADDR2);
-      expect(balance2.result).to.equal("u10009"); // 20k locked
+      expect(balance2.result).to.equal("u10009"); // 20k locked + rewards
       const balance3 = await getBalance(ADDR3);
       expect(balance3.result).to.equal("u9991"); // initial balance - reward
       const balance4 = await getBalance(ADDR4);

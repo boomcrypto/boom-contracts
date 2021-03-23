@@ -3,6 +3,8 @@
 (define-constant pool-deployer tx-sender)
 (define-constant pool-account (as-contract tx-sender))
 (define-constant pool-pox-address {hashbytes: 0x00, version: 0x00})
+(define-constant minimum-amount u100)
+(define-constant time-limit (+ u1000 burn-block-height))
 
 (define-constant prepare-phase-length u10)
 (define-constant reward-cycle-length u50)
@@ -15,7 +17,9 @@
 (define-constant err-call-not-allowed u14)
 (define-constant err-delegate-below-minimum u15)
 (define-constant err-delegate-invalid-stacker u16)
-(define-constant err-payout-too-early u14)
+(define-constant err-payout-too-early u17)
+(define-constant err-delegate-too-late u18)
+(define-constant err-max-nfts-minted u19)
 
 (define-data-var last-id uint u0)
 (define-data-var start (optional uint) none)
@@ -31,11 +35,29 @@
 
 (define-map lookup principal uint)
 
-(define-private (new-stacker-delegate-stx (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
+
+(define-private (pox-delegate-stx-and-stack (amount-ustx uint) (until-burn-ht (optional uint)))
+  (begin
+    (let ((ignore-result-revoke (contract-call? 'ST000000000000000000002AMW42H.pox revoke-delegate-stx))
+          (start-block-ht (+ burn-block-height u1))
+          (locking-cycles u1))
+      (match (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stx amount-ustx pool-account until-burn-ht none)
+        success
+          (let ((stacker tx-sender))
+            (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stack-stx stacker amount-ustx pool-pox-address start-block-ht locking-cycles))
+              stack-success (ok stack-success)
+              stack-error (print (err (to-uint stack-error)))))
+        error (err (to-uint error))))))
+
+(define-private (mint-and-delegatedly-stack (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)))
   (let
     ((id (+ u1 (var-get last-id))))
+      (asserts! (>= amount-ustx minimum-amount) (err err-delegate-below-minimum)) 
+      (asserts! (< burn-block-height time-limit) (err err-delegate-too-late))
+      (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)
+      (asserts! (< id u720) (err err-max-nfts-minted))
       (var-set last-id id)
-      (match (pox-delegate-stx amount-ustx until-burn-ht)
+      (match (pox-delegate-stx-and-stack amount-ustx until-burn-ht)
         success-pox
             (match (nft-mint? boom-pool-beta id stacker)
               success-mint
@@ -43,30 +65,16 @@
                   (map-insert lookup stacker id)
                   (if (map-insert meta id
                       {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: (some (get lock-amount success-pox)), until-burn-ht: until-burn-ht, reward: none})
-                    (ok true)
+                    (ok id)
                     (err err-map-function-failed)))
               error-minting (err error-minting))
         error-pox (err error-pox))))
-
-(define-private (pox-delegate-stx (amount-ustx uint) (until-burn-ht (optional uint)))
-  (if (> amount-ustx u100)
-    (let ((result-revoke (contract-call? 'ST000000000000000000002AMW42H.pox revoke-delegate-stx))
-          (start-block-ht (+ burn-block-height u1)))
-      (match (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stx amount-ustx pool-account until-burn-ht none)
-        success
-          (let ((stacker tx-sender))
-            (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stack-stx stacker amount-ustx pool-pox-address start-block-ht u1))
-              stack-success (ok stack-success)
-              stack-error (err (to-uint stack-error))))
-        error (err (to-uint error))
-      ))
-    (err err-delegate-below-minimum)))
 
 (define-public (delegate-stx (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
   (if (and
         (or (is-eq stacker tx-sender) (is-eq stacker contract-caller)) 
         (is-none (map-get? lookup stacker)))
-      (new-stacker-delegate-stx stacker amount-ustx until-burn-ht (some pool-pox-address))
+      (mint-and-delegatedly-stack stacker amount-ustx until-burn-ht)
     (err err-delegate-invalid-stacker)))
 
 ;; function for pool admins
@@ -75,18 +83,6 @@
   (match stack-result
     details (+ total (get lock-amount details))
     error total))
-
-(define-private (get-stack-amount (entry (tuple
-    (stacker principal)
-    (amount-ustx uint)
-    (until-burn-ht (optional uint))
-    (stacked-ustx (optional uint))
-    (reward (optional uint)))))
-  (let ((balance (stx-get-balance (get stacker entry)))
-      (amount-ustx (get amount-ustx entry)))
-        (if (< balance amount-ustx)
-          balance
-          amount-ustx)))
 
 (define-private (update-meta (id uint) (stacked-ustx uint))
   (match (map-get? meta id)
@@ -100,13 +96,13 @@
 
 (define-public (stack-aggregation-commit (reward-cycle uint))
   (if (is-eq tx-sender pool-deployer)
-  (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit pool-pox-address reward-cycle))
-    success (ok success)
-    error (err {kind: "native-pox-failed", code: (to-uint error)}))
+    (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit pool-pox-address reward-cycle))
+      success (ok success)
+      error (err {kind: "native-pox-failed", code: (to-uint error)}))
     (err {kind: "permission-denied", code: err-call-not-allowed})))
 
 (define-read-only (nft-details (nft-id uint))
-  (ok {amount-ustx: (unwrap! (get amount-ustx (map-get? meta nft-id)) (err err-invalid-asset-id)),
+  (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta nft-id)) (err err-invalid-asset-id)) (err err-invalid-asset-id)),
         owner: (unwrap! (nft-get-owner? boom-pool-beta nft-id) (err err-no-asset-owner))}))
 
 (define-private (payout-nft (nft-id uint) (context (tuple (reward-ustx uint) (total-ustx uint) (stx-from principal) (result (list 750 (response bool uint))))))
@@ -116,8 +112,10 @@
     (let (
       (transfer-result
           (match (nft-details nft-id)
-            entry (let ((reward-amount (/ (* reward-ustx  (get amount-ustx entry)) total-ustx)))
-                    (stx-transfer? reward-amount stx-from (get owner entry)))
+            entry (let ((reward-amount (/ (* reward-ustx  (get stacked-ustx entry)) total-ustx)))
+                    (match (stx-transfer? reward-amount stx-from (get owner entry))
+                      success-stx-transfer (ok true)
+                      error-stx-transfer (err-stx-transfer error-stx-transfer)))
             error (err error))))
       {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: stx-from,
         result: (unwrap-panic (as-max-len? (append (get result context) transfer-result) u750))})))
@@ -133,18 +131,8 @@
   (fold sum-stacked-ustx nfts u0))
 
 (define-public (payout (reward-ustx uint) (nfts (list 750 uint)))
-  (if (>= reward-ustx (stx-get-balance (as-contract tx-sender)))
-    (let ((total-ustx (get-total-stacked-ustx nfts)))
-      (let ((result (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, result: (list)})))
-        (contract-balance (as-contract (stx-get-balance tx-sender)))
-      )
-        (if (> contract-balance u0)
-          (match (as-contract (stx-transfer? (stx-get-balance tx-sender) tx-sender pool-account))
-            success result
-            error (err error))
-          result
-        )))
-    (err err-call-not-allowed)))
+  (let ((total-ustx (get-total-stacked-ustx nfts)))
+    (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, result: (list)}))))
 
 (define-read-only (get-total-stacked)
   (var-get total-stacked))
@@ -152,15 +140,9 @@
 (define-public (allow-contract-caller (this-contract principal))
   (if (is-eq tx-sender pool-deployer)
     (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox allow-contract-caller this-contract none))
-    (err err-call-not-allowed)))
+    (err 404)))
 
 ;; NFT functions
-
-;; error codes
-;; (err u1) -- sender does not own the asset
-;; (err u2) -- sender and recipient are the same principal
-;; (err u3) -- asset identified by asset-identifier does not exist
-;; (err u4) -- sender is not tx sender or contract caller
 (define-public (transfer (id uint) (sender principal) (recipient principal))
   (if (or (is-eq sender tx-sender) (is-eq sender contract-caller))
     (match (nft-transfer? boom-pool-beta id sender recipient)
@@ -173,6 +155,9 @@
 
 (define-read-only (get-owner-raw? (id uint))
   (nft-get-owner? boom-pool-beta id))
+
+(define-read-only (get-meta (id uint))
+  {uri: "https://boom.money/images/boom-pool.png", name: "Boom Stacking Pool Beta", mime-type: "image/png"})
 
 (define-read-only (get-nft-meta)
   {uri: "https://boom.money/images/boom-pool.png", name: "Boom Stacking Pool Beta", mime-type: "image/png"})
@@ -193,6 +178,8 @@
 (define-constant err-nft-not-found (err u404)) ;; not found
 (define-constant err-sender-equals-recipient (err u405)) ;; method not allowed
 (define-constant err-nft-exists (err u409)) ;; conflict
+(define-constant err-not-enough-funds (err u4021)) ;; payment required
+(define-constant err-amount-not-positive (err u4023)) ;; payment required
 
 (define-map err-strings (response uint uint) (string-ascii 32))
 (map-insert err-strings err-nft-not-owned "nft-not-owned")
@@ -201,6 +188,17 @@
 (map-insert err-strings err-sender-equals-recipient "sender-equals-recipient")
 (map-insert err-strings err-nft-exists "nft-exists")
 
+
+(define-private (err-stx-transfer (code uint))
+  (if (is-eq u1 code)
+    err-not-enough-funds
+    (if (is-eq u2 code)
+      err-sender-equals-recipient
+      (if (is-eq u3 code)
+        err-amount-not-positive
+        (if (is-eq u4 code)
+          err-not-allowed-sender
+          (err code))))))
 
 (define-private (err-nft-transfer (code uint))
   (if (is-eq u1 code)

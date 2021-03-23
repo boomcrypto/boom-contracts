@@ -1,11 +1,12 @@
 import {
+  contractPrincipalCV,
   listCV,
   makeContractCall,
+  noneCV,
   PostConditionMode,
   uintCV,
 } from "@stacks/transactions";
 import { expect } from "chai";
-import { BADNAME } from "dns";
 import { readFileSync } from "fs";
 import { describe } from "mocha";
 import {
@@ -16,9 +17,12 @@ import {
   faucetCall,
   network,
   handleTransaction,
+  processing
 } from "../deploy";
-import { ADDR1, testnetKeyMap } from "../mocknet";
 import BN from "bn.js";
+import {
+  standardPrincipalCV,
+} from "@stacks/transactions";
 const contractName = mainnet ? "boom-pool-beta-nfts" : "boom-pool-beta-nfts-v2";
 
 const contractOwner = mainnet
@@ -40,15 +44,69 @@ describe("boom-pool-nfts deploys suite", () => {
     }
   });
   it("deploys", async () => {
-    const result = await deployContract(
-      contractName,
-      "./contracts/boom-pool-beta-nfts.clar",
+    const resultTrait = await deployContract(
+      "nft-trait",
+      "./contracts/sips/sip-9-nft-trait.clar",
       (s) => s,
       contractOwner.private
     );
+    expect(resultTrait).to.be.a("string");
+    await processing(resultTrait)
+    const result = await deployContract(
+      contractName,
+      "./contracts/boom-pool-beta-nfts.clar",
+      (s) => s.replace(/ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW/g, contractOwner.stacks ),
+      contractOwner.private
+    );
     expect(result).to.be.a("string");
+    await processing(result)
   });
-  it.only("should payout", async () => {
+
+  it("should allow contract caller", async () => {
+    const tx = await makeContractCall({
+      contractAddress: contractOwner.stacks,
+      contractName: contractName,
+      functionName: "allow-contract-caller",
+      functionArgs: [contractPrincipalCV(contractOwner.stacks, contractName)],
+      senderKey: contractOwner.private,
+      network,
+      postConditionMode: PostConditionMode.Deny,
+    });
+    await handleTransaction(tx);
+
+    const txUser = await makeContractCall({
+      contractAddress: "ST000000000000000000002AMW42H",
+      contractName: "pox",
+      functionName: "allow-contract-caller",
+      functionArgs: [contractPrincipalCV(contractOwner.stacks, contractName), noneCV()],
+      senderKey: user.private,
+      network,
+      postConditionMode: PostConditionMode.Deny,
+    });
+    await handleTransaction(txUser);
+  })
+
+  it("should create an nft", async () => {
+    const functionArgs = [
+      standardPrincipalCV(user.stacks),
+      uintCV(101),
+      noneCV(),
+      noneCV(),
+    ];
+    const tx = await makeContractCall({
+      contractAddress: contractOwner.stacks,
+      contractName: contractName,
+      functionName: "delegate-stx",
+      functionArgs,
+      senderKey: user.private,
+      network,
+      postConditionMode: PostConditionMode.Deny,
+    });
+    console.log(JSON.stringify(tx))
+    await handleTransaction(tx);
+  });
+
+  it("should payout", async () => {
     const nfts = [1, 2, 3, 4, 5, 6];
     const functionArgs = [
       uintCV(330000000),
@@ -62,8 +120,7 @@ describe("boom-pool-nfts deploys suite", () => {
       senderKey: contractOwner.private,
       network,
       postConditionMode: PostConditionMode.Allow,
-      fee: new BN(300),
     });
-    handleTransaction(tx);
+    await handleTransaction(tx);
   });
 });
