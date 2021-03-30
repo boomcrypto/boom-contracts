@@ -102,7 +102,7 @@ function timeout(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function processing(tx: String, count: number = 0): Promise<boolean> {
+export async function processing(tx: String, count: number = 0): Promise<boolean> {
   return noSidecar
     ? processingWithoutSidecar(tx, count)
     : processingWithSidecar(tx, count);

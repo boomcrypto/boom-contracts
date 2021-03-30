@@ -34,7 +34,7 @@ describe("boom pool beta nfts", () => {
       "../contracts/sips/sip-9-nft-trait.clar",
       provider
     ).deployContract();
-    client = new Client(poolContractId, "boom-pool-beta-nfts", provider);
+    client = new Client(poolContractId, "boomboxes", provider);
     poxClient = new Client(
       "ST000000000000000000002AMW42H.pox",
       "mock-pox",

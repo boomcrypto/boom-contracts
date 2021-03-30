@@ -4,7 +4,7 @@
 (define-constant pool-account (as-contract tx-sender))
 (define-constant pool-pox-address {hashbytes: 0x00, version: 0x00})
 (define-constant minimum-amount u100)
-(define-constant time-limit (+ u1000 burn-block-height))
+(define-constant time-limit (+ u10000 burn-block-height))
 
 (define-constant prepare-phase-length u10)
 (define-constant reward-cycle-length u50)
@@ -54,8 +54,7 @@
     ((id (+ u1 (var-get last-id))))
       (asserts! (>= amount-ustx minimum-amount) (err err-delegate-below-minimum)) 
       (asserts! (< burn-block-height time-limit) (err err-delegate-too-late))
-      (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)
-      (asserts! (< id u720) (err err-max-nfts-minted))
+      (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)      
       (var-set last-id id)
       (match (pox-delegate-stx-and-stack amount-ustx until-burn-ht)
         success-pox
@@ -98,8 +97,8 @@
   (if (is-eq tx-sender pool-deployer)
     (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit pool-pox-address reward-cycle))
       success (ok success)
-      error (err {kind: "native-pox-failed", code: (to-uint error)}))
-    (err {kind: "permission-denied", code: err-call-not-allowed})))
+      error (err-pox-stack-aggregation-commit error))
+    err-not-allowed-sender))
 
 (define-read-only (nft-details (nft-id uint))
   (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta nft-id)) (err err-invalid-asset-id)) (err err-invalid-asset-id)),
@@ -140,7 +139,7 @@
 (define-public (allow-contract-caller (this-contract principal))
   (if (is-eq tx-sender pool-deployer)
     (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox allow-contract-caller this-contract none))
-    (err 404)))
+    (err 403)))
 
 ;; NFT functions
 (define-public (transfer (id uint) (sender principal) (recipient principal))
@@ -188,6 +187,8 @@
 (map-insert err-strings err-sender-equals-recipient "sender-equals-recipient")
 (map-insert err-strings err-nft-exists "nft-exists")
 
+(define-private (err-pox-stack-aggregation-commit (code int))
+  (err (to-uint (* 1000 code))))
 
 (define-private (err-stx-transfer (code uint))
   (if (is-eq u1 code)

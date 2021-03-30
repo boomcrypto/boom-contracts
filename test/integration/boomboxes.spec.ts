@@ -23,7 +23,8 @@ import BN from "bn.js";
 import {
   standardPrincipalCV,
 } from "@stacks/transactions";
-const contractName = mainnet ? "boom-pool-beta-nfts" : "boom-pool-beta-nfts-v2";
+
+const contractName = mainnet ? "boomboxes" : "boomboxes-v1";
 
 const contractOwner = mainnet
   ? user
@@ -43,19 +44,11 @@ describe("boom-pool-nfts deploys suite", () => {
       );
     }
   });
-  it("deploys", async () => {
-    const resultTrait = await deployContract(
-      "nft-trait",
-      "./contracts/sips/sip-9-nft-trait.clar",
-      (s) => s,
-      contractOwner.private
-    );
-    expect(resultTrait).to.be.a("string");
-    await processing(resultTrait)
+  it.only("deploys", async () => {    
     const result = await deployContract(
       contractName,
-      "./contracts/boom-pool-beta-nfts.clar",
-      (s) => s.replace(/ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW/g, contractOwner.stacks ),
+      "./contracts/boomboxes.clar",
+      (s) => s, //.replace(/ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW/g, contractOwner.stacks ),
       contractOwner.private
     );
     expect(result).to.be.a("string");
@@ -113,8 +106,8 @@ describe("boom-pool-nfts deploys suite", () => {
       listCV(nfts.map((nftId) => uintCV(nftId))),
     ];
     const tx = await makeContractCall({
-      contractAddress: "ST314JC8J24YWNVAEJJHQXS5Q4S9DX1FW5Z9DK9NT",
-      contractName: "boom-pool-beta-nfts-v2",
+      contractAddress: contractOwner.stacks,
+      contractName,
       functionName: "payout",
       functionArgs,
       senderKey: contractOwner.private,
