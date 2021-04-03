@@ -16,8 +16,8 @@ const fetch = require("node-fetch");
 
 import { ADDR1, ADDR2, ADDR3, ADDR4, testnetKeyMap } from "./mocknet";
 
-export const local = true;
-export const mocknet = true;
+export const local = false;
+export const mocknet = false;
 export const noSidecar = false;
 export const mainnet = false;
 
@@ -91,7 +91,7 @@ export async function faucetCall(recipient: string, amount: number) {
   const transaction = await makeSTXTokenTransfer({
     recipient,
     amount: new BN(amount),
-    senderKey: testnetKeyMap[ADDR4].private,
+    senderKey: testnetKeyMap[ADDR3].private,
     network,
   });
 
@@ -102,7 +102,10 @@ function timeout(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function processing(tx: String, count: number = 0): Promise<boolean> {
+export async function processing(
+  tx: String,
+  count: number = 0
+): Promise<boolean> {
   return noSidecar
     ? processingWithoutSidecar(tx, count)
     : processingWithSidecar(tx, count);

@@ -1,7 +1,10 @@
 import {
   contractPrincipalCV,
+  FungibleConditionCode,
   listCV,
   makeContractCall,
+  makeStandardSTXPostCondition,
+  makeSTXTokenTransfer,
   noneCV,
   PostConditionMode,
   uintCV,
@@ -17,12 +20,10 @@ import {
   faucetCall,
   network,
   handleTransaction,
-  processing
+  processing,
 } from "../deploy";
 import BN from "bn.js";
-import {
-  standardPrincipalCV,
-} from "@stacks/transactions";
+import { standardPrincipalCV } from "@stacks/transactions";
 
 const contractName = mainnet ? "boomboxes" : "boomboxes-v1";
 
@@ -44,7 +45,7 @@ describe("boom-pool-nfts deploys suite", () => {
       );
     }
   });
-  it.only("deploys", async () => {    
+  it("deploys", async () => {
     const result = await deployContract(
       contractName,
       "./contracts/boomboxes.clar",
@@ -52,7 +53,7 @@ describe("boom-pool-nfts deploys suite", () => {
       contractOwner.private
     );
     expect(result).to.be.a("string");
-    await processing(result)
+    await processing(result);
   });
 
   it("should allow contract caller", async () => {
@@ -71,13 +72,16 @@ describe("boom-pool-nfts deploys suite", () => {
       contractAddress: "ST000000000000000000002AMW42H",
       contractName: "pox",
       functionName: "allow-contract-caller",
-      functionArgs: [contractPrincipalCV(contractOwner.stacks, contractName), noneCV()],
+      functionArgs: [
+        contractPrincipalCV(contractOwner.stacks, contractName),
+        noneCV(),
+      ],
       senderKey: user.private,
       network,
       postConditionMode: PostConditionMode.Deny,
     });
     await handleTransaction(txUser);
-  })
+  });
 
   it("should create an nft", async () => {
     const functionArgs = [
@@ -95,14 +99,15 @@ describe("boom-pool-nfts deploys suite", () => {
       network,
       postConditionMode: PostConditionMode.Deny,
     });
-    console.log(JSON.stringify(tx))
+    console.log(JSON.stringify(tx));
     await handleTransaction(tx);
   });
 
-  it("should payout", async () => {
+  it.only("should payout", async () => {
     const nfts = [1, 2, 3, 4, 5, 6];
+    const amount = 1000000000;
     const functionArgs = [
-      uintCV(330000000),
+      uintCV(amount),
       listCV(nfts.map((nftId) => uintCV(nftId))),
     ];
     const tx = await makeContractCall({
@@ -112,7 +117,14 @@ describe("boom-pool-nfts deploys suite", () => {
       functionArgs,
       senderKey: contractOwner.private,
       network,
-      postConditionMode: PostConditionMode.Allow,
+      postConditionMode: PostConditionMode.Deny,
+      postConditions: [
+        makeStandardSTXPostCondition(
+          contractOwner.stacks,
+          FungibleConditionCode.LessEqual,
+          new BN(amount)
+        ),
+      ],
     });
     await handleTransaction(tx);
   });
