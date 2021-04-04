@@ -2,20 +2,20 @@
 # yarn lockfile v1
 
 
-"@blockstack/clarity-native-bin@^0.3.9":
-  version "0.3.9"
-  resolved "https://registry.yarnpkg.com/@blockstack/clarity-native-bin/-/clarity-native-bin-0.3.9.tgz#704d9f8e9f3d5a0299b83a962838dec4b06f6438"
-  integrity sha512-bvkcnpNFx1IlwsnzW2BX7rB7C/1Uvh6aMktvL39cL+3Jx/MxuWghFVibIVoLmdLRg3WhBvyDZX7CZPkMM3YiDQ==
+"@blockstack/clarity-native-bin@^0.3.10":
+  version "0.3.10"
+  resolved "https://registry.yarnpkg.com/@blockstack/clarity-native-bin/-/clarity-native-bin-0.3.10.tgz#836be707d5c53abead07cc56848892fe700c25db"
+  integrity sha512-nRsyYQvAnH0pHHSYxTYBCcgqAIY0UuvFqiGG7FlurQ64v4OMNHarKeBxF3sbtilk3rMehH/VuFU1BD94LBm3rA==
   dependencies:
     fs-extra "^8.0.1"
     node-fetch "^2.6.0"
     semver "^6.1.1"
     unzipper "^0.10.11"
 
-"@blockstack/clarity@^0.3.9":
-  version "0.3.9"
-  resolved "https://registry.yarnpkg.com/@blockstack/clarity/-/clarity-0.3.9.tgz#ed2e313dd8fc05765bd604f203fc9aaadca7d79a"
-  integrity sha512-DIL8Ur9k0ctbr+983IupHc9aGTnD0BQ5gnHijPBrsNUIGSAdcyb/j7tg5uF+P09gV4rZptXJDTIkHD6Z6AxY3A==
+"@blockstack/clarity@^0.3.10":
+  version "0.3.10"
+  resolved "https://registry.yarnpkg.com/@blockstack/clarity/-/clarity-0.3.10.tgz#1d889f52abab6abb20e1c38236fec332a63d5a37"
+  integrity sha512-SWiLPAHkbEPH5LB08/1MoO3dmnLUA0rVeknQnFJXGNjF1ndYODdlnXmLp+dPk3UwK3MMmskxH3G+8dDznr0Bxw==
 
 "@stacks/common@^1.2.2":
   version "1.2.2"
@@ -31,10 +31,10 @@
   dependencies:
     "@stacks/common" "^1.2.2"
 
-"@stacks/transactions@^1.3.3":
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/@stacks/transactions/-/transactions-1.3.3.tgz#46c331f3c96a091a2babad60b1d0bebdb1d9ac97"
-  integrity sha512-bs8TAASLUb19R05VdFOOaXyxflPdZAOpy6GgbH1RMNXpWiKEsz4hEYsAxW/QdZC9UINhLUE42MhH03Ydmnyu/Q==
+"@stacks/transactions@^1.3.5":
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/@stacks/transactions/-/transactions-1.3.5.tgz#af2d6722ec4c1a365361893eb9e83b678a6604bc"
+  integrity sha512-KhZ9y48KnOB+Es3whxbpxtPm6o5CYLrhxCCG5Tfglmj9AcFtpWCBjkcFwZJ/R3eI4OYthD5aMB9nYY31xGiULA==
   dependencies:
     "@stacks/common" "^1.2.2"
     "@stacks/network" "^1.2.2"
@@ -67,10 +67,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/chai@^4.2.15":
-  version "4.2.15"
-  resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.15.tgz#b7a6d263c2cecf44b6de9a051cf496249b154553"
-  integrity sha512-rYff6FI+ZTKAPkJUoyz7Udq3GaoDZnxYDEvdEdFZASiA7PoErltHezDishqQiSDWrGxvxmplH304jyzQmjp0AQ==
+"@types/chai@^4.2.16":
+  version "4.2.16"
+  resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.16.tgz#f09cc36e18d28274f942e7201147cce34d97e8c8"
+  integrity sha512-vI5iOAsez9+roLS3M3+Xx7w+WRuDtSmF8bQkrbcIJ2sC1PcDgVoA0WGpa+bIrJ+y8zqY2oi//fUctkxtIcXJCw==
 
 "@types/elliptic@^6.4.12":
   version "6.4.12"
