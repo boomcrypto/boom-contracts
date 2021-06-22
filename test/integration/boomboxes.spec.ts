@@ -85,8 +85,8 @@ describe("boom-pool-nfts deploys suite", () => {
 
   it("should create an nft", async () => {
     const functionArgs = [
-      standardPrincipalCV(user.stacks),
       uintCV(101),
+      standardPrincipalCV(user.stacks),
       noneCV(),
       noneCV(),
     ];

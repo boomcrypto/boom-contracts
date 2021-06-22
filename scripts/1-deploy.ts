@@ -1,10 +1,10 @@
 import { deployContract, processing } from "../test/deploy";
-import { contractName, contractOwner } from "./0-config";
+import { contractFilePath, contractName, contractOwner, imageUri } from "./0-config";
 
 async function deploy() {
   const result = await deployContract(
     contractName,
-    "./contracts/boomboxes.clar",
+    contractFilePath,
     (s) =>
       s
         .replace(
@@ -15,10 +15,7 @@ async function deploy() {
           /ST000000000000000000002AMW42H/g,
           "SP000000000000000000002Q6VF78"
         )
-        .replace(
-          /https:\/\/boom.money\/images\/boom-pool.svg/g,
-          "https://boom-nft-41369b66-36da-4442-be60-fff6d755b065.s3.amazonaws.com/24762181-0ba6-4c5b-9065-1c874fb334d2.svg"
-        ),
+        .replace(/https:\/\/boom.money\/images\/boom-pool.svg/g, imageUri),
     contractOwner.private
   );
   await processing(result);

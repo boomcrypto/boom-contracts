@@ -1,0 +1,9 @@
+[project]
+name = "boom.money"
+
+[[project.requirements]]
+contract_id = "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait"
+
+[contracts.boomboxes]
+path = "contracts/boomboxes-11.clar"
+depends_on = []

@@ -1,10 +1,8 @@
 import chai, { expect } from "chai";
 import {
   Client,
-  extractResult,
   Provider,
   ProviderRegistry,
-  ResultInterface,
 } from "@blockstack/clarity";
 import { ADDR1, ADDR2, ADDR3, ADDR4 } from "../mocknet";
 import chaiString from "chai-string";

@@ -5,7 +5,9 @@ import {
   cvToJSON,
 } from "@stacks/transactions";
 import { network } from "../test/deploy";
-import { contractOwner, contractName } from "./0-config";
+//import { contractOwner, contractName } from "./0-config";
+const contractOwner = { stacks: "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW" };
+const contractName = "premier-apricot-hedgehog";
 
 async function getTotalStacked() {
   const lastTokenIdCV = await callReadOnlyFunction({
@@ -18,7 +20,11 @@ async function getTotalStacked() {
   });
   const lastTokenId = cvToJSON(lastTokenIdCV).value.value;
 
-  console.log(JSON.stringify(listCV([...new Array(lastTokenId).keys()].map((i) => uintCV(i)))))
+  console.log(
+    JSON.stringify(
+      listCV([...new Array(lastTokenId).keys()].map((i) => uintCV(i)))
+    )
+  );
   const resultCV = await callReadOnlyFunction({
     contractAddress: contractOwner.stacks,
     contractName: contractName,

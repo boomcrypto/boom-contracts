@@ -19,7 +19,7 @@ import { ADDR1, ADDR2, ADDR3, ADDR4, testnetKeyMap } from "./mocknet";
 export const local = false;
 export const mocknet = false;
 export const noSidecar = false;
-export const mainnet = false;
+export const mainnet = true;
 
 const STACKS_CORE_API_URL = local
   ? noSidecar
@@ -37,7 +37,7 @@ export const network = mainnet ? new StacksMainnet() : new StacksTestnet();
 network.coreApiUrl = STACKS_CORE_API_URL;
 
 export const user = mainnet
-  ? JSON.parse(fs.readFileSync("../mainnet.json").toString())
+  ? JSON.parse(fs.readFileSync("../boom-mainnet.json").toString())
   : testnetKeyMap[ADDR1];
 
 //

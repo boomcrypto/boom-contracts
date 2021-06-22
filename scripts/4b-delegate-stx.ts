@@ -1,26 +1,36 @@
 import {
-  contractPrincipalCV,
+  AnchorMode,
   makeContractCall,
+  noneCV,
   PostConditionMode,
+  standardPrincipalCV,
+  uintCV,
 } from "@stacks/transactions";
 import { handleTransaction, network, user } from "../test/deploy";
-//import { contractOwner, contractName } from "./0-config";
+import BN from "bn.js";
+
 const contractOwner = { stacks: "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW" };
 const contractName = "premier-apricot-hedgehog";
 
-async function allowContractCaller(user: { private: string }) {
+async function delegateStx(user: { private: string; stacks: string }) {
   const tx = await makeContractCall({
     contractAddress: contractOwner.stacks,
     contractName: contractName,
-    functionName: "allow-contract-caller",
-    functionArgs: [contractPrincipalCV(contractOwner.stacks, contractName)],
+    functionName: "delegate-stx",
+    functionArgs: [
+      uintCV(86_000_000_000_000),
+      standardPrincipalCV(user.stacks),
+      noneCV(),
+      noneCV(),
+    ],
+    nonce: new BN(46),
     senderKey: user.private,
     network,
-    postConditionMode: PostConditionMode.Deny,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
   });
   console.log(tx);
   await handleTransaction(tx);
 }
 
-//allowContractCaller(contractOwner);
-allowContractCaller(user);
+delegateStx(user);

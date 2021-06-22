@@ -1,6 +1,7 @@
 import {
   contractPrincipalCV,
   makeContractCall,
+  noneCV,
   PostConditionMode,
 } from "@stacks/transactions";
 import { handleTransaction, network, user } from "../test/deploy";
@@ -10,10 +11,13 @@ const contractName = "premier-apricot-hedgehog";
 
 async function allowContractCaller(user: { private: string }) {
   const tx = await makeContractCall({
-    contractAddress: contractOwner.stacks,
-    contractName: contractName,
+    contractAddress: "ST000000000000000000002AMW42H",
+    contractName: "pox",
     functionName: "allow-contract-caller",
-    functionArgs: [contractPrincipalCV(contractOwner.stacks, contractName)],
+    functionArgs: [
+      contractPrincipalCV(contractOwner.stacks, contractName),
+      noneCV(),
+    ],
     senderKey: user.private,
     network,
     postConditionMode: PostConditionMode.Deny,

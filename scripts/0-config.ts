@@ -1,9 +1,12 @@
 import { readFileSync } from "fs";
 import { mainnet } from "../test/deploy";
 
-export const contractName = "boomboxes-cycle-6";
+export const contractFilePath = "./contracts/boomboxes-11.clar"
+export const contractName = "boomboxes-cycle-11";
+export const imageUri =
+  "https://cloudflare-ipfs.com/ipfs/bafkreicpyq7jvun4wb6e3zkt5lib5w5npihumljyfzjopzlwfans6lvarq";
 export const contractOwner = JSON.parse(
-  readFileSync("../mainnet.json").toString()
+  readFileSync("../boom-mainnet.json").toString()
 );
 
 if (!mainnet) {
