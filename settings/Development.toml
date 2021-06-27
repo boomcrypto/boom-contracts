@@ -7,11 +7,11 @@ balance = 1_000_000
 
 [accounts.wallet_1]
 mnemonic = "spoil sock coyote include verify comic jacket gain beauty tank flush victory illness edge reveal shallow plug hobby usual juice harsh pact wreck eight"
-balance = 1_000_000
+balance = 1_000_000_000_000
 
 [accounts.wallet_2]
 mnemonic = "arrange scale orient half ugly kid bike twin magnet joke hurt fiber ethics super receive version wreck media fluid much abstract reward street alter"
-balance = 1_000_000
+balance = 2_000_000_000_000
 
 [accounts.wallet_3]
 mnemonic = "glide clown kitchen picnic basket hidden asset beyond kid plug carbon talent drama wet pet rhythm hero nest purity baby bicycle ghost sponsor dragon"

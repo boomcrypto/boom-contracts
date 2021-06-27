@@ -1,8 +1,8 @@
-(impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
-(define-non-fungible-token boomboxes-cycle-12 uint)
-(define-constant pool-deployer tx-sender)
-(define-constant pool-account (as-contract tx-sender))
-(define-constant pool-pox-address {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
+;;(impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
+(define-non-fungible-token b-12 uint)
+(define-constant dplyr tx-sender)
+(define-constant accnt (as-contract tx-sender))
+(define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
 (define-constant minimum-amount u100000000)
 (define-constant time-limit u690950)
 
@@ -26,10 +26,10 @@
     (let ((ignore-result-revoke (contract-call? 'ST000000000000000000002AMW42H.pox revoke-delegate-stx))
           (start-block-ht (+ burn-block-height u1))
           (locking-cycles u1))
-      (match (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stx amount-ustx pool-account until-burn-ht none)
+      (match (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stx amount-ustx accnt until-burn-ht none)
         success
           (let ((stacker tx-sender))
-            (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stack-stx stacker amount-ustx pool-pox-address start-block-ht locking-cycles))
+            (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox delegate-stack-stx stacker amount-ustx px-addr start-block-ht locking-cycles))
               stack-success (ok stack-success)
               stack-error (print (err (to-uint stack-error)))))
         error (err (to-uint error))))))
@@ -43,7 +43,7 @@
       (var-set last-id id)
       (match (pox-delegate-stx-and-stack amount-ustx until-burn-ht)
         success-pox
-            (match (nft-mint? boomboxes-cycle-11 id stacker)
+            (match (nft-mint? b-12 id stacker)
               success-mint
                 (begin
                   (asserts! (map-insert lookup stacker id) err-map-function-failed)
@@ -80,19 +80,25 @@
 
 (define-public (stack-aggregation-commit (reward-cycle uint))
   (if (> burn-block-height time-limit)
-    (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit pool-pox-address reward-cycle))
+    (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit px-addr reward-cycle))
       success (ok success)
       error (err-pox-stack-aggregation-commit error))
     err-commit-too-early))
 
+
 (define-read-only (nft-details (nft-id uint))
   (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta nft-id)) err-invalid-asset-id) err-invalid-asset-id),
-        owner: (unwrap! (nft-get-owner? boomboxes-cycle-11 nft-id) err-no-asset-owner)}))
+        owner: (unwrap! (nft-get-owner? b-12 nft-id) err-no-asset-owner)}))
 
-(define-private (payout-nft (nft-id uint) (context (tuple (reward-ustx uint) (total-ustx uint) (stx-from principal) (result (list 750 (response bool uint))))))
-  (let ((reward-ustx (get reward-ustx context))
-      (total-ustx (get total-ustx context))
-      (stx-from (get stx-from context)))
+(define-read-only (nft-details-at-block (nft-id uint) (stacks-tip uint))
+  (match (get-block-info? id-header-hash stacks-tip)
+    ihh (at-block ihh (nft-details nft-id))
+    err-invalid-stacks-tip))
+
+(define-private (payout-nft (nft-id uint) (ctx (tuple (reward-ustx uint) (total-ustx uint) (stx-from principal) (pay-stacks-tip uint) (result (list 750 (response bool uint))))))
+  (let ((reward-ustx (get reward-ustx ctx))
+      (total-ustx (get total-ustx ctx))
+      (stx-from (get stx-from ctx)))
     (let (
       (transfer-result
           (match (nft-details nft-id)
@@ -101,8 +107,8 @@
                       success-stx-transfer (ok true)
                       error-stx-transfer (err-stx-transfer error-stx-transfer)))
             error (err error))))
-      {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: stx-from,
-        result: (unwrap-panic (as-max-len? (append (get result context) transfer-result) u750))})))
+      {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: stx-from, pay-stacks-tip: (get pay-stacks-tip ctx),
+        result: (unwrap-panic (as-max-len? (append (get result ctx) transfer-result) u750))})))
 
 (define-private (sum-stacked-ustx (nft-id uint) (total uint))
   (match (map-get? meta nft-id)
@@ -114,31 +120,31 @@
 (define-read-only (get-total-stacked-ustx (nfts (list 750 uint)))
   (fold sum-stacked-ustx nfts u0))
 
-(define-public (payout (reward-ustx uint) (nfts (list 750 uint)))
+(define-public (payout (reward-ustx uint) (nfts (list 750 uint)) (pay-stacks-tip uint))
   (let ((total-ustx (get-total-stacked-ustx nfts)))
-    (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, result: (list)}))))
+    (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, pay-stacks-tip: pay-stacks-tip, result: (list)}))))
 
 (define-read-only (get-total-stacked)
   (var-get total-stacked))
 
 (define-public (allow-contract-caller (this-contract principal))
-  (if (is-eq tx-sender pool-deployer)
+  (if (is-eq tx-sender dplyr)
     (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox allow-contract-caller this-contract none))
     (err 403)))
 
 ;; NFT functions
 (define-public (transfer (id uint) (sender principal) (recipient principal))
   (if (or (is-eq sender tx-sender) (is-eq sender contract-caller))
-    (match (nft-transfer? boomboxes-cycle-11 id sender recipient)
+    (match (nft-transfer? b-12 id sender recipient)
       success (ok success)
       error (err-nft-transfer error))
     err-not-allowed-sender))
 
 (define-read-only (get-owner (id uint))
-  (ok (nft-get-owner? boomboxes-cycle-11 id)))
+  (ok (nft-get-owner? b-12 id)))
 
 (define-read-only (get-owner-raw? (id uint))
-  (nft-get-owner? boomboxes-cycle-11 id))
+  (nft-get-owner? b-12 id))
 
 (define-read-only (get-meta (id uint))
   {uri: "https://boom.money/images/boom-pool.svg", name: "Boombox, Test Edition", mime-type: "image/svg+xml"})
@@ -172,6 +178,7 @@
 (define-constant err-delegate-invalid-stacker (err u605))
 (define-constant err-delegate-too-late (err u606))
 (define-constant err-commit-too-early (err u607))
+(define-constant err-invalid-stacks-tip (err u608))
 
 (define-map err-strings (response uint uint) (string-ascii 32))
 (map-insert err-strings err-nft-not-owned "nft-not-owned")
@@ -186,7 +193,7 @@
 (map-insert err-strings err-delegate-invalid-stacker "delegate-invalid-stacker")
 (map-insert err-strings err-delegate-too-late "delegate-too-late")
 (map-insert err-strings err-commit-too-early "commit-too-early")
-
+(map-insert err-strings err-invalid-stacks-tip "invalid-stacks-tip")
 
 (define-private (err-pox-stack-aggregation-commit (code int))
   (err (to-uint (* 1000 code))))
