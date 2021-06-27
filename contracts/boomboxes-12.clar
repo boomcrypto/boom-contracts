@@ -1,10 +1,10 @@
 (impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
-(define-non-fungible-token boomboxes-cycle-11 uint)
+(define-non-fungible-token boomboxes-cycle-12 uint)
 (define-constant pool-deployer tx-sender)
 (define-constant pool-account (as-contract tx-sender))
 (define-constant pool-pox-address {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
 (define-constant minimum-amount u100000000)
-(define-constant time-limit u688850)
+(define-constant time-limit u690950)
 
 (define-data-var last-id uint u0)
 (define-data-var start (optional uint) none)
