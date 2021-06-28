@@ -92,22 +92,23 @@
 
 (define-read-only (nft-details-at-block (nft-id uint) (stacks-tip uint))
   (match (get-block-info? id-header-hash stacks-tip)
-    ihh (at-block ihh (nft-details nft-id))
+    ihh (print (at-block (print ihh) (nft-details nft-id)))
     err-invalid-stacks-tip))
 
 (define-private (payout-nft (nft-id uint) (ctx (tuple (reward-ustx uint) (total-ustx uint) (stx-from principal) (pay-stacks-tip uint) (result (list 750 (response bool uint))))))
   (let ((reward-ustx (get reward-ustx ctx))
       (total-ustx (get total-ustx ctx))
-      (stx-from (get stx-from ctx)))
+      (stx-from (get stx-from ctx))
+      (stacks-tip (get pay-stacks-tip ctx)))
     (let (
       (transfer-result
-          (match (nft-details nft-id)
+          (match (nft-details-at-block nft-id stacks-tip)
             entry (let ((reward-amount (/ (* reward-ustx  (get stacked-ustx entry)) total-ustx)))
                     (match (stx-transfer? reward-amount stx-from (get owner entry))
                       success-stx-transfer (ok true)
                       error-stx-transfer (err-stx-transfer error-stx-transfer)))
             error (err error))))
-      {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: stx-from, pay-stacks-tip: (get pay-stacks-tip ctx),
+      {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: stx-from, pay-stacks-tip: stacks-tip,
         result: (unwrap-panic (as-max-len? (append (get result ctx) transfer-result) u750))})))
 
 (define-private (sum-stacked-ustx (nft-id uint) (total uint))
@@ -120,9 +121,15 @@
 (define-read-only (get-total-stacked-ustx (nfts (list 750 uint)))
   (fold sum-stacked-ustx nfts u0))
 
+(define-read-only (get-total-stacked-ustx-at-block (nfts (list 750 uint)) (stacks-tip uint))
+  (match (get-block-info? id-header-hash stacks-tip)
+    ihh (at-block ihh (ok (get-total-stacked-ustx nfts)))
+    err-invalid-stacks-tip))
+
 (define-public (payout (reward-ustx uint) (nfts (list 750 uint)) (pay-stacks-tip uint))
-  (let ((total-ustx (get-total-stacked-ustx nfts)))
-    (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, pay-stacks-tip: pay-stacks-tip, result: (list)}))))
+  (match (get-total-stacked-ustx-at-block nfts pay-stacks-tip)
+    total-ustx (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, pay-stacks-tip: pay-stacks-tip, result: (list)}))
+    error (err error)))
 
 (define-read-only (get-total-stacked)
   (var-get total-stacked))
