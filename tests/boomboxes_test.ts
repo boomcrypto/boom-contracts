@@ -4,7 +4,7 @@ import {
   Chain,
   Account,
   types,
-} from "https://deno.land/x/clarinet@v0.14.0/index.ts";
+} from "https://deno.land/x/clarinet@v0.14.1/index.ts";
 import { assertEquals } from "https://deno.land/std@0.99.0/testing/asserts.ts";
 
 function poxAllowContractCaller(account: Account, deployer: Account) {
@@ -115,6 +115,7 @@ Clarinet.test({
       (block3.receipts[0].events[0] as any).stx_transfer_event.amount,
       "33333"
     );
+    // 66666 STX remain with the sender (owner of nft #2)
 
     let block4 = chain.mineBlock([transfer(2, wallet_2, wallet_1)]);
     block4.receipts[0].result.expectOk();

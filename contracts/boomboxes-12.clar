@@ -1,4 +1,4 @@
-;;(impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
+(impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
 (define-non-fungible-token b-12 uint)
 (define-constant dplyr tx-sender)
 (define-constant accnt (as-contract tx-sender))

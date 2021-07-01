@@ -4,9 +4,6 @@ name = "boom.money"
 [[project.requirements]]
 contract_id = "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait"
 
-[[project.requirements]]
-contract_id = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.boom-nfts"
-
 [contracts.boomboxes]
 path = "contracts/boomboxes-12.clar"
 depends_on = []

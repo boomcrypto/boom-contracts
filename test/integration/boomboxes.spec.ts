@@ -25,7 +25,7 @@ import {
 import BN from "bn.js";
 import { standardPrincipalCV } from "@stacks/transactions";
 
-const contractName = mainnet ? "boomboxes" : "boomboxes-v1";
+const contractName = mainnet ? "boomboxes-12" : "boomboxes-v1";
 
 const contractOwner = mainnet
   ? user
@@ -48,7 +48,7 @@ describe("boom-pool-nfts deploys suite", () => {
   it("deploys", async () => {
     const result = await deployContract(
       contractName,
-      "./contracts/boomboxes.clar",
+      "./contracts/boomboxes-12.clar",
       (s) => s, //.replace(/ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW/g, contractOwner.stacks ),
       contractOwner.private
     );
