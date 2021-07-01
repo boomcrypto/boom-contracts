@@ -153,12 +153,6 @@
 (define-read-only (get-owner-raw? (id uint))
   (nft-get-owner? b-12 id))
 
-(define-read-only (get-meta (id uint))
-  {uri: "https://boom.money/images/boom-pool.svg", name: "Boombox, Test Edition", mime-type: "image/svg+xml"})
-
-(define-read-only (get-nft-meta)
-  {uri: "https://boom.money/images/boom-pool.svg", name: "Boomboxes", mime-type: "image/svg+xml"})
-
 (define-read-only (get-last-token-id)
   (ok (var-get last-id)))
 

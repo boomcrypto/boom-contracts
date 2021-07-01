@@ -78,11 +78,11 @@ describe("boom pool beta nfts", () => {
     return client.submitQuery(query);
   };
 
-  const getMeta = async () => {
+  const getTokenUri = async (id: number) => {
     const query = await client.createQuery({
       method: {
-        name: "get-nft-meta",
-        args: [],
+        name: "get-token-uri",
+        args: [`u${id}`],
       },
     });
     return client.submitQuery(query);
@@ -123,19 +123,6 @@ describe("boom pool beta nfts", () => {
     });
     await tx.sign(sender);
     return client.submitTransaction(tx);
-  };
-
-  const mineBlocks = async (numberOfBlocks: number) => {
-    for (let i = 0; i < numberOfBlocks; i++) {
-      const tx = await client.createTransaction({
-        method: {
-          name: "get-nft-meta",
-          args: [],
-        },
-      });
-      tx.sign(ADDR1);
-      await client.submitTransaction(tx);
-    }
   };
 
   const getBalance = async (address: string) => {
@@ -189,10 +176,10 @@ describe("boom pool beta nfts", () => {
       expect(owner3.result).is.equal(`(ok none)`);
     });
 
-    it("should return meta data", async () => {
-      const meta = await getMeta();
+    it("should return token uri for any number", async () => {
+      const meta = await getTokenUri(1);
       expect(JSON.stringify(meta)).is.equal(
-        '{"success":true,"result":"(tuple (mime-type \\"image/svg+xml\\") (name \\"Boomboxes\\") (uri \\"https://boom.money/images/boom-pool.svg\\"))","debugOutput":""}'
+        '{"success":true,"result":"(ok (some \\"https://cloudflare-ipfs.com/ipfs/bafkreiavechqeaufv4nmqup6axahse45z7dnpda4otqi5ikh4yds4nl3ry\\"))","debugOutput":""}'
       );
     });
 
