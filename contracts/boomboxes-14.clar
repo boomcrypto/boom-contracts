@@ -1,6 +1,6 @@
 (impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
 (define-non-fungible-token b-14 uint)
-;; (define-constant dplyr tx-sender) ;; dplyr not used
+(define-constant dplyr tx-sender) ;; dplyr not used
 
 (define-constant accnt (as-contract tx-sender))
 (define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
@@ -44,7 +44,7 @@
       (var-set last-id id)
       (match (pox-delegate-stx-and-stack amount-ustx until-burn-ht)
         success-pox
-            (match (nft-mint? b-12 id stacker)
+            (match (nft-mint? b-14 id stacker)
               success-mint
                 (begin
                   (asserts! (map-insert lookup stacker id) err-map-function-failed)
@@ -89,7 +89,7 @@
 
 (define-read-only (nft-details (nft-id uint))
   (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta nft-id)) err-invalid-asset-id) err-invalid-asset-id),
-        owner: (unwrap! (nft-get-owner? b-12 nft-id) err-no-asset-owner)}))
+        owner: (unwrap! (nft-get-owner? b-14 nft-id) err-no-asset-owner)}))
 
 (define-read-only (nft-details-at-block (nft-id uint) (stacks-tip uint))
   (match (get-block-info? id-header-hash stacks-tip)
@@ -143,16 +143,16 @@
 ;; NFT functions
 (define-public (transfer (id uint) (sender principal) (recipient principal))
   (if (or (is-eq sender tx-sender) (is-eq sender contract-caller))
-    (match (nft-transfer? b-12 id sender recipient)
+    (match (nft-transfer? b-14 id sender recipient)
       success (ok success)
       error (err-nft-transfer error))
     err-not-allowed-sender))
 
 (define-read-only (get-owner (id uint))
-  (ok (nft-get-owner? b-12 id)))
+  (ok (nft-get-owner? b-14 id)))
 
 (define-read-only (get-owner-raw? (id uint))
-  (nft-get-owner? b-12 id))
+  (nft-get-owner? b-14 id))
 
 (define-read-only (get-last-token-id)
   (ok (var-get last-id)))
