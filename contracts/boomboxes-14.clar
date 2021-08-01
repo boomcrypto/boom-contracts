@@ -1,6 +1,7 @@
 (impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
 (define-non-fungible-token b-14 uint)
 ;; (define-constant dplyr tx-sender) ;; dplyr not used
+
 (define-constant accnt (as-contract tx-sender))
 (define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
 (define-constant minimum-amount u100000000)
@@ -61,6 +62,83 @@
       (mint-and-delegatedly-stack stacker amount-ustx until-burn-ht)
     err-delegate-invalid-stacker))
 
+;; function for pool admins
+(define-private (get-total (stack-result (response (tuple (lock-amount uint) (stacker principal) (unlock-burn-height uint)) (tuple (kind (string-ascii 32)) (code uint))))
+    (total uint))
+  (match stack-result
+    details (+ total (get lock-amount details))
+    error total))
+
+(define-private (update-meta (id uint) (stacked-ustx uint))
+  (match (map-get? meta id)
+    entry (map-set meta id {
+      stacker: (get stacker entry),
+      amount-ustx: (get amount-ustx entry),
+      until-burn-ht: (get until-burn-ht entry),
+      stacked-ustx: (some stacked-ustx),
+      reward: (get reward entry)})
+    false))
+
+(define-public (stack-aggregation-commit (reward-cycle uint))
+  (if (> burn-block-height time-limit)
+    (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit px-addr reward-cycle))
+      success (ok success)
+      error (err-pox-stack-aggregation-commit error))
+    err-commit-too-early))
+
+
+(define-read-only (nft-details (nft-id uint))
+  (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta nft-id)) err-invalid-asset-id) err-invalid-asset-id),
+        owner: (unwrap! (nft-get-owner? b-12 nft-id) err-no-asset-owner)}))
+
+(define-read-only (nft-details-at-block (nft-id uint) (stacks-tip uint))
+  (match (get-block-info? id-header-hash stacks-tip)
+    ihh (print (at-block (print ihh) (nft-details nft-id)))
+    err-invalid-stacks-tip))
+
+(define-private (payout-nft (nft-id uint) (ctx (tuple (reward-ustx uint) (total-ustx uint) (stx-from principal) (pay-stacks-tip uint) (result (list 750 (response bool uint))))))
+  (let ((reward-ustx (get reward-ustx ctx))
+      (total-ustx (get total-ustx ctx))
+      (stx-from (get stx-from ctx))
+      (stacks-tip (get pay-stacks-tip ctx)))
+    (let (
+      (transfer-result
+          (match (nft-details-at-block nft-id stacks-tip)
+            entry (let ((reward-amount (/ (* reward-ustx  (get stacked-ustx entry)) total-ustx)))
+                    (match (stx-transfer? reward-amount stx-from (get owner entry))
+                      success-stx-transfer (ok true)
+                      error-stx-transfer (err-stx-transfer error-stx-transfer)))
+            error (err error))))
+      {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: stx-from, pay-stacks-tip: stacks-tip,
+        result: (unwrap-panic (as-max-len? (append (get result ctx) transfer-result) u750))})))
+
+(define-private (sum-stacked-ustx (nft-id uint) (total uint))
+  (match (map-get? meta nft-id)
+    entry (match (get stacked-ustx entry)
+            amount (+ total amount)
+            total)
+    total))
+
+(define-read-only (get-total-stacked-ustx (nfts (list 750 uint)))
+  (fold sum-stacked-ustx nfts u0))
+
+(define-read-only (get-total-stacked-ustx-at-block (nfts (list 750 uint)) (stacks-tip uint))
+  (match (get-block-info? id-header-hash stacks-tip)
+    ihh (at-block ihh (ok (get-total-stacked-ustx nfts)))
+    err-invalid-stacks-tip))
+
+(define-public (payout (reward-ustx uint) (nfts (list 750 uint)) (pay-stacks-tip uint))
+  (match (get-total-stacked-ustx-at-block nfts pay-stacks-tip)
+    total-ustx (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, pay-stacks-tip: pay-stacks-tip, result: (list)}))
+    error (err error)))
+
+(define-read-only (get-total-stacked)
+  (var-get total-stacked))
+
+(define-public (allow-contract-caller (this-contract principal))
+  (if (is-eq tx-sender dplyr)
+    (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox allow-contract-caller this-contract none))
+    (err 403)))
 
 ;; NFT functions
 (define-public (transfer (id uint) (sender principal) (recipient principal))
@@ -85,6 +163,39 @@
 (define-read-only (get-token-uri (id uint))
   (ok (some "https://bafkreicgdpmukjc6lp7vhnchf3sma6chmduaafqmywswkwh6a6ygejk5nu.ipfs.dweb.link/")))
 
+
+;; error handling
+(define-constant err-nft-not-owned (err u401)) ;; unauthorized
+(define-constant err-not-allowed-sender (err u403)) ;; forbidden
+(define-constant err-nft-not-found (err u404)) ;; not found
+(define-constant err-sender-equals-recipient (err u405)) ;; method not allowed
+(define-constant err-nft-exists (err u409)) ;; conflict
+(define-constant err-not-enough-funds (err u4021)) ;; payment required
+(define-constant err-amount-not-positive (err u4022)) ;; payment required
+
+(define-constant err-map-function-failed (err u601))
+(define-constant err-invalid-asset-id (err u602))
+(define-constant err-no-asset-owner (err u603))
+(define-constant err-delegate-below-minimum (err u604))
+(define-constant err-delegate-invalid-stacker (err u605))
+(define-constant err-delegate-too-late (err u606))
+(define-constant err-commit-too-early (err u607))
+(define-constant err-invalid-stacks-tip (err u608))
+
+(define-map err-strings (response uint uint) (string-ascii 32))
+(map-insert err-strings err-nft-not-owned "nft-not-owned")
+(map-insert err-strings err-not-allowed-sender "not-allowed-sender")
+(map-insert err-strings err-nft-not-found "nft-not-found")
+(map-insert err-strings err-sender-equals-recipient "sender-equals-recipient")
+(map-insert err-strings err-nft-exists "nft-exists")
+(map-insert err-strings err-map-function-failed "map-function-failed")
+(map-insert err-strings err-invalid-asset-id "invalid-asset-id")
+(map-insert err-strings err-no-asset-owner "no-asset-owner")
+(map-insert err-strings err-delegate-below-minimum "delegate-below-minimum")
+(map-insert err-strings err-delegate-invalid-stacker "delegate-invalid-stacker")
+(map-insert err-strings err-delegate-too-late "delegate-too-late")
+(map-insert err-strings err-commit-too-early "commit-too-early")
+(map-insert err-strings err-invalid-stacks-tip "invalid-stacks-tip")
 
 (define-private (err-pox-stack-aggregation-commit (code int))
   (err (to-uint (* 1000 code))))
