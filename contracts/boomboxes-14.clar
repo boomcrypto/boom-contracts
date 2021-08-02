@@ -5,7 +5,7 @@
 (define-constant accnt (as-contract tx-sender))
 (define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
 (define-constant minimum-amount u100000000)
-(define-constant time-limit u694950) ;; add 4000 blocks?
+(define-constant time-limit u695150) ;; add 4200 blocks
 
 (define-data-var last-id uint u0)
 (define-data-var start (optional uint) none)
@@ -60,8 +60,8 @@
         (or (is-eq stacker tx-sender) (is-eq stacker contract-caller)) 
         (is-none (map-get? lookup stacker)))
         (begin 
-          (mint-and-delegatedly-stack stacker amount-ustx until-burn-ht) 
-          (var-set total-stacked (+ (var-get total-stacked) amount-ustx)))
+          (var-set total-stacked (+ (var-get total-stacked) amount-ustx))
+          (mint-and-delegatedly-stack stacker amount-ustx until-burn-ht))
       
     err-delegate-invalid-stacker))
 
