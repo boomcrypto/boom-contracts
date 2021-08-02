@@ -59,7 +59,10 @@
   (if (and
         (or (is-eq stacker tx-sender) (is-eq stacker contract-caller)) 
         (is-none (map-get? lookup stacker)))
-      (mint-and-delegatedly-stack stacker amount-ustx until-burn-ht)
+        (begin 
+          (mint-and-delegatedly-stack stacker amount-ustx until-burn-ht) 
+          (var-set total-stacked (+ (var-get total-stacked) amount-ustx)))
+      
     err-delegate-invalid-stacker))
 
 ;; function for pool admins
