@@ -39,7 +39,7 @@
 (define-private (mint-and-delegatedly-stack (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)))
   (let
     ((id (+ u1 (var-get last-id))))
-      (asserts! (is-some (index-of allowed-address tx-sender)) err-not-allowed-caller)
+      (asserts! (is-some (index-of allowed-addresses tx-sender)) err-not-allowed)
       (asserts! (>= amount-ustx minimum-amount) err-delegate-below-minimum)
       (asserts! (< (last-token-id-raw) mint-limit) err-delegate-too-late)
       (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)      
@@ -149,7 +149,7 @@
     (match (nft-transfer? b-17 id sender recipient)
       success (ok success)
       error (err-nft-transfer error))
-    err-not-allowed-sender))
+    err-not-allowed))
 
 (define-read-only (get-owner (id uint))
   (ok (nft-get-owner? b-17 id)))
@@ -169,7 +169,7 @@
 
 ;; error handling
 (define-constant err-nft-not-owned (err u401)) ;; unauthorized
-(define-constant err-not-allowed-sender (err u403)) ;; forbidden
+(define-constant err-not-allowed (err u403)) ;; forbidden
 (define-constant err-nft-not-found (err u404)) ;; not found
 (define-constant err-sender-equals-recipient (err u405)) ;; method not allowed
 (define-constant err-nft-exists (err u409)) ;; conflict
@@ -187,7 +187,7 @@
 
 (define-map err-strings (response uint uint) (string-ascii 32))
 (map-insert err-strings err-nft-not-owned "nft-not-owned")
-(map-insert err-strings err-not-allowed-sender "not-allowed-sender")
+(map-insert err-strings err-not-allowed "not-allowed")
 (map-insert err-strings err-nft-not-found "nft-not-found")
 (map-insert err-strings err-sender-equals-recipient "sender-equals-recipient")
 (map-insert err-strings err-nft-exists "nft-exists")
@@ -211,7 +211,7 @@
       (if (is-eq u3 code)
         err-amount-not-positive
         (if (is-eq u4 code)
-          err-not-allowed-sender
+          err-not-allowed
           (err code))))))
 
 (define-private (err-nft-transfer (code uint))
