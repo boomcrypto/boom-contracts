@@ -164,7 +164,7 @@
   (var-get last-id))
 
 (define-read-only (get-token-uri (id uint))
-  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreihjmmwgqi6aapcbqxroguz5j2pal623t22g4uuw2s5v6kdbavks2q")))
+  (ok (some "https://cloudflare-ipfs.com/ipfs/QmTYvatj7HFT3zsFCAz52DLERvr1jtuSfQsXXZbxLjW2Hz")))
 
 
 ;; error handling
