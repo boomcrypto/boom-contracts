@@ -5,7 +5,7 @@
 (define-constant accnt (as-contract tx-sender))
 (define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
 (define-constant minimum-amount u40000000)
-(define-constant mint-limit u3) ;; add 4200 blocks
+(define-constant mint-limit u3)
 
 (define-data-var last-id uint u0)
 (define-data-var start (optional uint) none)
@@ -39,7 +39,7 @@
   (let
     ((id (+ u1 (var-get last-id))))
       (asserts! (>= amount-ustx minimum-amount) err-delegate-below-minimum)
-      (asserts! (< get-last-token-id mint-limit) err-delegate-too-late)
+      (asserts! (< (last-token-id-raw) mint-limit) err-delegate-too-late)
       (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)      
       (var-set last-id id)
       (match (pox-delegate-stx-and-stack amount-ustx until-burn-ht)
@@ -85,8 +85,7 @@
 (define-public (stack-aggregation-commit (reward-cycle uint))
     (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit px-addr reward-cycle))
       success (ok success)
-      error (err-pox-stack-aggregation-commit error))
-    err-commit-too-early)
+      error (err-pox-stack-aggregation-commit error)))
 
 
 (define-read-only (nft-details (nft-id uint))
