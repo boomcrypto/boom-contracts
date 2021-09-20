@@ -5,5 +5,5 @@ name = "boom.money"
 contract_id = "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait"
 
 [contracts.boomboxes]
-path = "contracts/boomboxes-12.clar"
+path = "contracts/boomboxes-17.clar"
 depends_on = []
