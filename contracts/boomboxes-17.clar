@@ -21,6 +21,7 @@
 
 (define-map lookup principal uint)
 
+(define-constant allowed-addresses (list 'SPSEBFRZZEZSHGRKRR1Z55RX5AWHER3CYM0H9BMW 'SP18137PW232001C2Q60H87F01QHW0967FHTKTGZ3 'SP1H5X1MP2DQ9KXHZFVC3E43NNTZRCJXKMHCAE8N))
 
 (define-private (pox-delegate-stx-and-stack (amount-ustx uint) (until-burn-ht (optional uint)))
   (begin
@@ -38,6 +39,7 @@
 (define-private (mint-and-delegatedly-stack (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)))
   (let
     ((id (+ u1 (var-get last-id))))
+      (asserts! (is-some (index-of allowed-address tx-sender)) err-not-allowed-caller)
       (asserts! (>= amount-ustx minimum-amount) err-delegate-below-minimum)
       (asserts! (< (last-token-id-raw) mint-limit) err-delegate-too-late)
       (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)      
