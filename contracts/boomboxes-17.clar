@@ -5,7 +5,7 @@
 (define-constant accnt (as-contract tx-sender))
 (define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
 (define-constant minimum-amount u40000000)
-(define-constant admin 'ST3ZKEEAH65V6P0PEY91QHFKSQEP8RJXDPM1SBBVB)
+(define-constant mint-limit u3) ;; add 4200 blocks
 
 (define-data-var last-id uint u0)
 (define-data-var start (optional uint) none)
@@ -39,7 +39,7 @@
   (let
     ((id (+ u1 (var-get last-id))))
       (asserts! (>= amount-ustx minimum-amount) err-delegate-below-minimum)
-      (asserts! (< tx-sender admin) err-nft-not-allowed)
+      (asserts! (< get-last-token-id mint-limit) err-delegate-too-late)
       (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)      
       (var-set last-id id)
       (match (pox-delegate-stx-and-stack amount-ustx until-burn-ht)
@@ -83,7 +83,11 @@
     false))
 
 (define-public (stack-aggregation-commit (reward-cycle uint))
-  (asserts! (= tx-sender admin) (err err-pox-stack-aggregation-commit))
+    (match (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox stack-aggregation-commit px-addr reward-cycle))
+      success (ok success)
+      error (err-pox-stack-aggregation-commit error))
+    err-commit-too-early)
+
 
 (define-read-only (nft-details (nft-id uint))
   (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta nft-id)) err-invalid-asset-id) err-invalid-asset-id),
@@ -159,7 +163,7 @@
   (var-get last-id))
 
 (define-read-only (get-token-uri (id uint))
-  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreihjmmwgqi6aapcbqxroguz5j2pal623t22g4uuw2s5v6kdbavks2q")))
+  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreih6k4kynovy2yb5kxtu2dedwq7fjiagyn5uqvinzabtrbsclwjwju")))
 
 
 ;; error handling
