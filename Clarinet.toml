@@ -1,9 +1,51 @@
 [project]
-name = "boom.money"
+name = "Boom"
 
-[[project.requirements]]
-contract_id = "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait"
+[contracts.boomboxes-12]
+path = "contracts/boomboxes-12.clar"
+depends_on = ["sip-9-nft-trait"]
 
-[contracts.boomboxes]
+[contracts.boomboxes-14]
+path = "contracts/boomboxes-14.clar"
+depends_on = ["sip-9-nft-trait"]
+
+[contracts.boomboxes-16]
+path = "contracts/boomboxes-16.clar"
+depends_on = ["sip-9-nft-trait"]
+
+[contracts.boomboxes-17]
 path = "contracts/boomboxes-17.clar"
+depends_on = ["sip-9-nft-trait"]
+
+[contracts.boomboxes-18]
+path = "contracts/boomboxes-18.clar"
+depends_on = ["sip-9-nft-trait"]
+
+
+[contracts.boom-nft-alt]
+path = "contracts/boom-nft-alt.clar"
+depends_on = ["sip-9-nft-trait"]
+
+[contracts.boom-nft-x]
+path = "contracts/boom-nft-x.clar"
+depends_on = ["sip-9-nft-trait"]
+
+[contracts.boom-nfts-50]
+path = "contracts/boom-nfts-50.clar"
+depends_on = ["sip-9-nft-trait"]
+
+[contracts.boom-nfts-v6]
+path = "contracts/boom-nfts-v6.clar"
+depends_on = ["sip-9-nft-trait"]
+
+# [contracts.boomboxes-admin]
+# path = "contracts/boomboxes-admin.clar"
+# depends_on = []
+
+# [contracts.boomboxes-20]
+# path = "contracts/boomboxes-20.clar"
+# depends_on = ["boomboxes-admin"]
+
+[contracts.sip-9-nft-trait]
+path = "contracts/sips/sip-9-nft-trait.clar"
 depends_on = []
