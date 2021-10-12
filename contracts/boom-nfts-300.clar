@@ -1,5 +1,9 @@
 ;; @contract Boom NFTs
 ;; @version 3
+
+;; testnet: ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait
+;; testnet: ST000000000000000000002AMW42H.bns
+
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 
 (define-non-fungible-token boom uint)
