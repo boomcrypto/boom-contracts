@@ -8,7 +8,7 @@ contract_id = "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait"
 contract_id = "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait"
 
 [contracts.boomboxes]
-path = "contracts/boomboxes-16.clar"
+path = "contracts/boomboxes-18.clar"
 depends_on = ["sip-9-nft-trait"]
 
 [contracts.boom-nfts]
