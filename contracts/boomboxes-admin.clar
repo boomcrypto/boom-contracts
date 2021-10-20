@@ -1,28 +1,64 @@
-// TODO: update time-limit
+;;(impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
 
-(impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
-(define-non-fungible-token b-18 uint)
-(define-constant dplyr tx-sender) ;; dplyr not used
-
+(define-constant dplyr tx-sender) 
 (define-constant accnt (as-contract tx-sender))
-(define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
-(define-constant minimum-amount u40000000)
-(define-constant time-limit u699350) ;; add 4200 blocks
+;; (define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01}) ;; how do we want to manage this?
 
 (define-data-var last-id uint u0)
 (define-data-var start (optional uint) none)
 (define-data-var total-stacked uint u0)
 
-(define-map meta uint
-  (tuple
-    (stacker principal)
-    (amount-ustx uint)
-    (until-burn-ht (optional uint))
-    (stacked-ustx (optional uint))
-    (reward (optional uint))))
+(define-map boombox uint 
+  (tuple 
+    (contractId string-ascii) ;; not sure how this should be entered
+    (cycle uint)
+    (minimum-amount uint)
+    (time-limit uint)
+    (owner principal)))
 
-(define-map lookup principal uint)
+;; @desc adds a boombox contract to the list of boomboxes
+;; @param contractId; The NFT contract for this boombox
+;; @param cycle; PoX reward cycle
+;; @param minimum-amount; minimum stacking amount for this boombox
+;; @param time-limit; block at which minting should stop
+;; @param owner; owner/admin of this boombox
+;; @param px-addr; reward pool address
+(define-private (add-boombox (contractId string-ascii) (cycle uint) (minimum-amount uint) (time-limit uint) (owner principal))
+  (begin
+    (id (+ 1 (var-get last-id)))
+    (asserts! boombox-unique (err err-nft-exists)) ;; does it make sense to use u409 here?
+    (map-insert boombox id 
+      {contractId: contractId, cycle: cycle, minimum-amount: minimum-amout, time-limit: time-limit, owner: owner } err-map-function-failed)))
 
+;; @desc stops minting of a boombox
+;; @param id; the boombox id
+(define-private (halt-boombox id) 
+  (begin
+    ;; TODO: check contract-caller is boombox owner
+    (map-delete boombox id err-map-function-failed))) ;; TODO: add a more specific error
+)
+
+;; @desc lookup a boombox by id
+;; @param id; the boombox id
+(define-private (get-boombox-by-id id) 
+  (begin
+    (map-get boombox id err-map-function-failed))) ;; TODO: add a more specific error
+
+;; @desc lookup a boombox by id
+;; @param id; the boombox id
+;; (define-private (get-boombox-by-cycle (cycle uint)) 
+;;   (begin
+;;     (map-get boombox id err-map-function-failed))) ;; TODO: add a more specific error
+
+
+;;(define-private get-boombox-by-owner body)
+;;(define-private get-boombox-by-owner-and-cycle body)
+;;(define-private get-boombox-by-owner-and-cycle-and-id body)
+;;(define-private get-boombox-by-minimum-amount body)
+;;(define-private get-boombox-by-time-limit body)
+;;(define-private boombox-unique body)
+
+(define-map lookup principal uint) ;; not sure how this needs to be re-written
 
 (define-private (pox-delegate-stx-and-stack (amount-ustx uint) (until-burn-ht (optional uint)))
   (begin
@@ -73,16 +109,6 @@
   (match stack-result
     details (+ total (get lock-amount details))
     error total))
-
-(define-private (update-meta (id uint) (stacked-ustx uint))
-  (match (map-get? meta id)
-    entry (map-set meta id {
-      stacker: (get stacker entry),
-      amount-ustx: (get amount-ustx entry),
-      until-burn-ht: (get until-burn-ht entry),
-      stacked-ustx: (some stacked-ustx),
-      reward: (get reward entry)})
-    false))
 
 (define-public (stack-aggregation-commit (reward-cycle uint))
   (if (> burn-block-height time-limit)
@@ -144,29 +170,6 @@
   (if (is-eq tx-sender dplyr)
     (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox allow-contract-caller this-contract none))
     (err 403)))
-
-;; NFT functions
-(define-public (transfer (id uint) (sender principal) (recipient principal))
-  (if (or (is-eq sender tx-sender) (is-eq sender contract-caller))
-    (match (nft-transfer? b-18 id sender recipient)
-      success (ok success)
-      error (err-nft-transfer error))
-    err-not-allowed-sender))
-
-(define-read-only (get-owner (id uint))
-  (ok (nft-get-owner? b-18 id)))
-
-(define-read-only (get-owner-raw? (id uint))
-  (nft-get-owner? b-18 id))
-
-(define-read-only (get-last-token-id)
-  (ok (var-get last-id)))
-
-(define-read-only  (last-token-id-raw)
-  (var-get last-id))
-
-(define-read-only (get-token-uri (id uint))
-  (ok (some "https://cloudflare-ipfs.com/ipfs/QmTYvatj7HFT3zsFCAz52DLERvr1jtuSfQsXXZbxLjW2Hz")))
 
 
 ;; error handling
