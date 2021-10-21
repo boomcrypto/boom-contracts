@@ -51,12 +51,14 @@
 ;;     (map-get boombox id err-map-function-failed))) ;; TODO: add a more specific error
 
 
-;;(define-private get-boombox-by-owner body)
-;;(define-private get-boombox-by-owner-and-cycle body)
-;;(define-private get-boombox-by-owner-and-cycle-and-id body)
-;;(define-private get-boombox-by-minimum-amount body)
-;;(define-private get-boombox-by-time-limit body)
-;;(define-private boombox-unique body)
+;; (define-private (get-boombox-by-owner (owner principal)) body)
+;; (define-private (get-boombox-by-owner-and-cycle (owner principal) (cycle uint)) body)
+;; (define-private get-boombox-by-owner-and-cycle-and-id (owner principal) (cycle uint)  body)
+;; (define-private get-boombox-by-minimum-amount body)
+;; (define-private get-boombox-by-time-limit body)
+;; (define-private boombox-unique body)
+;; (define-private get-stackers-by-id body)
+;; (define-private get-total-stacked-by-id body)
 
 (define-map lookup principal uint) ;; not sure how this needs to be re-written
 
