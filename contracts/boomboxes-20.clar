@@ -5,7 +5,7 @@
 (define-constant accnt (as-contract tx-sender))
 (define-constant px-addr {hashbytes: 0x13effebe0ea4bb45e35694f5a15bb5b96e851afb, version: 0x01})
 (define-constant minimum-amount u40000000)
-(define-constant time-limit u703550) ;; add 4200 blocks
+(define-constant time-limit u707750) ;; add 4200 blocks
 
 (define-data-var last-id uint u0)
 (define-data-var start (optional uint) none)
