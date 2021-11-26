@@ -14,8 +14,6 @@ The [Stacks blockchain](https://stacks.co) provides functions so that everybody 
 
 ### Stacks Aggregation Commit
 
-
-
 ### Transfer Reward NFT
 
 Transfers the stacking nft. The owner of the nft is rewarded when anybody does the payout.
