@@ -26,6 +26,8 @@ Transfers the stacking nft. The owner of the nft is rewarded when anybody does t
 
 Once the BTC rewards are received and the are converted to STX, the pool operator pays the users. The pool operator has to provide a list of nfts that participated in the pooling. Anybody can call this function.
 
+### Admin functions
+
 ```
 (define-public (payout (reward-ustx uint) (nfts (list 750 uint))))
 ```
