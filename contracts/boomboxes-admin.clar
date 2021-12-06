@@ -23,9 +23,8 @@
 ;; @param time-limit; block at which minting should stop
 ;; @param owner; owner/admin of this boombox
 ;; @param px-addr; reward pool address
-(define-private (add-boombox (contractId <boombox-trait>) (cycle uint) (minimum-amount uint) (time-limit uint) (owner principal))
-  (begin
-    (id (+ 1 (var-get last-id)))
+(define-private (add-boombox (bb-contract <boombox-trait>) (cycle uint) (minimum-amount uint) (time-limit uint) (owner principal))
+  (let ((id (+ 1 (var-get last-id))))
     (asserts! boombox-unique (err err-nft-exists)) ;; does it make sense to use u409 here?
     (map-insert boombox id 
       {contractId: contractId, cycle: cycle, minimum-amount: minimum-amout, time-limit: time-limit, owner: owner })))
@@ -78,32 +77,31 @@
 (define-private (mint-and-delegatedly-stack (stacker principal) (amount-ustx uint) (until-burn-ht (optional uint)) 
                   (bb-contract <boombox-trait>))
   (let
-    ((minimum-amount (unwrap! (get minimum-amount (map-get? (contract-of bb-contract))) err-non-found)))
+    ((minimum-amount (unwrap! (get minimum-amount (map-get? boombox (contract-of bb-contract))) err-non-found)))
       (asserts! (>= amount-ustx minimum-amount) err-delegate-below-minimum)
       (asserts! (< burn-block-height time-limit) err-delegate-too-late)
       (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)      
-      (var-set last-id id)
+      (var-set last-id boombox-id)
       (match (pox-delegate-stx-and-stack amount-ustx until-burn-ht)
         success-pox
             (match (contract-call? bb-contract mint stacker amount-ustx until-burn-ht)
               nft-id
                 (begin
                   (asserts! (map-insert lookup {stacker:stacker, boombox-contract: bb-contract} nft-id) err-map-function-failed)
-                  (asserts! (map-insert meta {boombox-contract: bb-contract, id: nft-id}
+                  (asserts! (map-insert meta {boombox-id: boombox-id, id: nft-id}
                       {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: (some (get lock-amount success-pox)), until-burn-ht: until-burn-ht, reward: none})
                       err-map-function-failed)
-                  (ok {boombox-contract: bb-contract, id: nft-id, pox: success-pox}))
+                  (ok {boombox-id: boombox-id, id: nft-id, pox: success-pox}))
               error-minting (err-nft-mint error-minting))
         error-pox (err error-pox))))
 
-(define-public (delegate-stx (amount-ustx uint) (stacker principal) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
+(define-public (delegate-stx (boombox-id uint) (amount-ustx uint) (stacker principal) (until-burn-ht (optional uint)) (pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1))))))
   (if (and
         (or (is-eq stacker tx-sender) (is-eq stacker contract-caller)) 
-        (is-none (map-get? lookup stacker)))
+        (is-none (map-get? lookup {stacker: stacker, boombox-id: boombox-id})))
         (begin 
-          (var-set total-stacked (+ (var-get total-stacked) amount-ustx))
+          (var-set total-stacked (+ (unwrap! (map-get? total-stacked boombox-id) err-invalid-asset-id) amount-ustx))
           (mint-and-delegatedly-stack stacker amount-ustx until-burn-ht))
-      
     err-delegate-invalid-stacker))
 
 ;; function for pool admins
@@ -122,7 +120,9 @@
 
 
 (define-read-only (nft-details (bb-contract <boombox-trait>) (nft-id uint))
-  (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta {boombox-contract: (as-principal bb-contract), id: nft-id})) err-invalid-asset-id) err-invalid-asset-id),
+  (let ((bb-principal (contract-of bb-contract))
+      (boombox-id (unwrap! (map-get? boombox-id-by-principal bb-principal) err-invalid-asset-id)))
+  (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta {boombox-id: boombox-id, id: nft-id})) err-invalid-asset-id) err-invalid-asset-id),
         owner: (unwrap! (contract-call? bb-contract get-owner nft-id) err-no-asset-owner)}))
 
 (define-read-only (nft-details-at-block (bb-contract <boombox-trait>) (nft-id uint) (stacks-tip uint))
@@ -130,44 +130,27 @@
     ihh (print (at-block (print ihh) (nft-details bb-contract nft-id)))
     err-invalid-stacks-tip))
 
-(define-private (payout-nft (nft-id uint) (ctx (tuple (reward-ustx uint) (total-ustx uint) (stx-from principal) (pay-stacks-tip uint) (result (list 750 (response bool uint))))))
-  (let ((reward-ustx (get reward-ustx ctx))
-      (total-ustx (get total-ustx ctx))
-      (stx-from (get stx-from ctx))
-      (stacks-tip (get pay-stacks-tip ctx)))
-    (let (
-      (transfer-result
-          (match (nft-details-at-block nft-id stacks-tip)
-            entry (let ((reward-amount (/ (* reward-ustx  (get stacked-ustx entry)) total-ustx)))
-                    (match (stx-transfer? reward-amount stx-from (get owner entry))
-                      success-stx-transfer (ok true)
-                      error-stx-transfer (err-stx-transfer error-stx-transfer)))
-            error (err error))))
-      {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: stx-from, pay-stacks-tip: stacks-tip,
-        result: (unwrap-panic (as-max-len? (append (get result ctx) transfer-result) u750))})))
+(define-data-var ctx-boombox-id uint u0)
 
 (define-private (sum-stacked-ustx (nft-id uint) (total uint))
-  (match (map-get? meta nft-id)
+  (match (map-get? meta {boombox-id: (var-get ctx-boombox-id), nft-id: nft-id})
     entry (match (get stacked-ustx entry)
             amount (+ total amount)
             total)
     total))
 
-(define-read-only (get-total-stacked-ustx (nfts (list 750 uint)))
-  (fold sum-stacked-ustx nfts u0))
+(define-read-only (get-total-stacked-ustx (boombox-id uint) (nfts (list 750 uint)))
+  (begin 
+    (var-set ctx-boombox-id boombox-id)
+    (fold sum-stacked-ustx nfts u0)))
 
-(define-read-only (get-total-stacked-ustx-at-block (nfts (list 750 uint)) (stacks-tip uint))
+(define-read-only (get-total-stacked-ustx-at-block (boombox-id uint) (nfts (list 750 uint)) (stacks-tip uint))
   (match (get-block-info? id-header-hash stacks-tip)
-    ihh (at-block ihh (ok (get-total-stacked-ustx nfts)))
+    ihh (at-block ihh (ok (get-total-stacked-ustx boombox-id nfts)))
     err-invalid-stacks-tip))
 
-(define-public (payout (reward-ustx uint) (nfts (list 750 uint)) (pay-stacks-tip uint))
-  (match (get-total-stacked-ustx-at-block nfts pay-stacks-tip)
-    total-ustx (ok (fold payout-nft nfts {reward-ustx: reward-ustx, total-ustx: total-ustx, stx-from: tx-sender, pay-stacks-tip: pay-stacks-tip, result: (list)}))
-    error (err error)))
-
-(define-read-only (get-total-stacked)
-  (var-get total-stacked))
+(define-read-only (get-total-stacked (boombox-id uint))
+  (map-get? total-stacked boombox-id))
 
 (define-public (allow-contract-caller (this-contract principal))
   (if (is-eq tx-sender dplyr)
