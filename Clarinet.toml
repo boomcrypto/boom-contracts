@@ -13,6 +13,10 @@ depends_on = ["sip-9-nft-trait"]
 
 [contracts.boom-nfts]
 path = "contracts/boom-nfts-300.clar"
+depends_on = ["commission-trait"]
+
+[contracts.commission-trait]
+path = "contracts/commission.clar"
 depends_on = []
 
 # [contracts.boomboxes-admin]

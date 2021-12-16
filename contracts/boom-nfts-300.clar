@@ -6,7 +6,7 @@
 ;; testnet: ST1QK1AZ24R132C0D84EEQ8Y2JDHARDR58SMAYMMW.commission-trait
 
 (impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
-(use-trait commission-trait .commission.commission)
+(use-trait commission-trait .commission-trait.commission)
 
 (define-non-fungible-token boom uint)
 (define-data-var last-id uint u0)
