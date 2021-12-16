@@ -31,6 +31,8 @@ const downloadSource = async (contractAddress, contractName) => {
 
 /*
 await downloadSource(admin1, "boom-nfts-v6");
+await downloadSource(admin1, "boom-nft-300");
+await downloadSource(admin1, "boom-nft-300-v2");
 await downloadSource(admin1, "boom-nft-300-v3");
 await downloadSource(admin1, "boom-market-v1");
 await downloadSource(admin1, "boom-market-ext-v1");
