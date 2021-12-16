@@ -1,4 +1,15 @@
-# Clarity Contract for Boomboxes
+# Clarity Contracts developed and used by Boom
+
+This repository contains the currently used and developed smart contracts for boom.money.
+
+The `main` branch contains the current development code with tests.
+
+The `mainnet` branch contains the source code for contracts deployed on mainnet.
+
+The `testnet` branch contains the source code for contracts deployed on testnet.
+
+The branches for mainnet and testnet contracts contain a script `getSource` that allows to easily pull the source code from the network. Just run `yarn start` after editing `getSource.mjs`.
+## Boomboxes
 
 The [Stacks blockchain](https://stacks.co) provides functions so that everybody can participate in proof of transfer. For users with STX holdings below the required minimum, it is possible to build a pool. This repo provides a contract for a community stacking pool that is managed by a smart contract. The smart contract creates NFTs for stackers.
 
