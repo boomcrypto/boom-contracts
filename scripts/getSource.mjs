@@ -14,8 +14,7 @@ const config = new Configuration({
 
 const api = new SmartContractsApi(config);
 
-const admin1 = "ST314JC8J24YWNVAEJJHQXS5Q4S9DX1FW5Z9DK9NT";
-const admin2 = "ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW";
+const admin1 = "ST1QK1AZ24R132C0D84EEQ8Y2JDHARDR58SMAYMMW";
 
 const downloadSource = async (contractAddress, contractName) => {
   console.log(`downloading ${contractAddress}.${contractName}`);
@@ -31,6 +30,11 @@ const downloadSource = async (contractAddress, contractName) => {
 };
 
 /*
-await downloadSource(admin1, "boomboxes-v1");
-await downloadSource(admin2, "boom-pool-nfts-v1");
- */
+await downloadSource(admin1, "boom-nfts-v6");
+await downloadSource(admin1, "boom-nft-300-v3");
+await downloadSource(admin1, "boom-market-v1");
+await downloadSource(admin1, "boom-market-ext-v1");
+await downloadSource(admin1, "tradables-trait");
+await downloadSource(admin1, "tradables-trait-ext");
+await downloadSource(admin1, "commission-trait");
+*/
