@@ -1,0 +1,19 @@
+
+[project]
+name = "boom.money"
+
+
+[contracts.boombox-admin]
+path = "contracts/boombox-admin.clar"
+depends_on = ["boombox-trait"]
+
+[contracts.boombox-trait]
+path = "contracts/boombox-trait.clar"
+depends_on = []
+
+[contracts.boombox-simple]
+path = "contracts/boombox-simple.clar"
+depends_on = []
+
+
+[notebooks]

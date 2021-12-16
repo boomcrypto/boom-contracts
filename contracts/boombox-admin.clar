@@ -2,7 +2,8 @@
 
 (define-constant dplyr tx-sender)
 (define-constant accnt (as-contract tx-sender))
-(define-constant blocks-before-start u100)
+;; M blocks before the prepare phase starts of length N
+(define-constant blocks-before-rewards u30)
 
 (define-data-var last-id uint u0)
 (define-map total-stacked uint uint)
@@ -99,7 +100,7 @@
       (locking-period (get locking-period details)))
     (asserts! (get active details) err-not-authorized)
     (asserts! (>= amount-ustx (get minimum-amount details)) err-delegate-below-minimum)
-    (asserts! (< (+ burn-block-height blocks-before-start) (reward-cycle-to-burn-height (get cycle details))) err-delegate-too-late)
+    (asserts! (< (+ burn-block-height blocks-before-rewards) (reward-cycle-to-burn-height (get cycle details))) err-delegate-too-late)
     (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)
     (asserts! (is-eq (contract-of fq-contract) (get fq-contract details)) err-invalid-boombox)
     (map-set total-stacked id (+ (default-to u0 (map-get? total-stacked id)) amount-ustx))
@@ -110,7 +111,7 @@
 ;; function for pool admins
 (define-public (stack-aggregation-commit (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (reward-cycle uint))
   (begin
-    (asserts! (>= (+ burn-block-height blocks-before-start) (reward-cycle-to-burn-height reward-cycle)) err-too-early)
+    (asserts! (>= (+ burn-block-height blocks-before-rewards) (reward-cycle-to-burn-height reward-cycle)) err-too-early)
     (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox stack-aggregation-commit pox-addr reward-cycle))
       success (ok success)
       error (err (to-uint error)))))
