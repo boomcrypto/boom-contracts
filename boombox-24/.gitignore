@@ -2,6 +2,3 @@
 settings/Mainnet.toml
 settings/Testnet.toml
 history.txt
-
-# Dependency directories
-node_modules/
