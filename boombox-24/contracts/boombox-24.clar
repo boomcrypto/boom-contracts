@@ -18,7 +18,7 @@
 ;; data maps and vars
 ;;
 (define-data-var last-id uint u0)
-(define-data-var boombox-admin principal .boombox-admin)
+(define-data-var boombox-admin principal .boombox-admin-v1)
 ;; boombox-admin contract : boombox id
 (define-map boombox-id principal uint)
 ;; approval maps
