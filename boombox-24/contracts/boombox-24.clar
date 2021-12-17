@@ -10,9 +10,12 @@
 ;; constants
 ;;
 (define-constant deployer tx-sender)
+(define-constant max-supply u2500)
+
 ;; err constants
 (define-constant err-not-authorized (err u403))
 (define-constant err-not-found (err u404))
+(define-constant err-sold-out (err u501))
 (define-constant err-invalid-stacks-tip (err u608))
 
 ;; data maps and vars
@@ -77,6 +80,7 @@
 ;; can only be called by boombox admin
 (define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
   (let ((next-id (+ u1 (var-get last-id))))
+    (asserts! (<= next-id max-supply) err-sold-out)
     (asserts! (is-eq bb-id (unwrap! (map-get? boombox-id contract-caller) err-not-authorized)) err-not-authorized)
     (var-set last-id next-id)
     (try! (nft-mint? bb-24 next-id stacker))
