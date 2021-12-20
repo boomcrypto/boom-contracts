@@ -13,12 +13,9 @@
 (define-data-var last-series-id uint u0)
 
 (define-constant PARTS_PER_MILLION 1000000)
-(define-constant OWNER tx-sender)
 
 ;; scoped variable for boom-mint function
 (define-data-var ctx-mint {series-id: uint, creator: principal} {series-id: u0, creator: tx-sender})
-
-(define-map nft-categories uint (string-utf8 256))
 
 (define-map meta uint
   {series-id: uint,
@@ -74,8 +71,7 @@
         (ctx (var-get ctx-mint))
         (series-id (get series-id ctx))
         (series (unwrap-panic (map-get? series-meta series-id)))
-        (default-cats (get default-categories series))
-        (cats (default-to default-cats categories)))
+        (cats (default-to (get default-categories series) categories)))
       (unwrap-panic (nft-mint? boom id (get creator ctx)))
       (var-set last-id id)
       (map-insert meta id
@@ -107,19 +103,15 @@
       royalties: royalties})
     (ok {series-id: series-id, ids: (map mint-boom ids (list (some categories)))})))
 
-(define-public (add-category (id uint) (name (string-utf8 256)))
-  (begin
-    (asserts! (or (is-eq OWNER tx-sender) (is-eq OWNER contract-caller)) err-permission-denied)
-    (ok (map-set nft-categories id name))))
-
 ;; change categories of some nft.
 ;; The new categories override the old ones.
 (define-public (change-categories (id uint) (owner principal) (categories (list 5 uint)))
     (let 
       ((nft (merge (unwrap! (map-get? meta id) err-no-nft) {categories: categories})))
       (print nft)
-      (asserts! (or (is-eq owner tx-sender) (is-eq owner contract-caller)) err-permission-denied)
-      (ok (map-set meta id nft))))
+      (asserts! (is-approved-with-owner id contract-caller owner) err-permission-denied)
+      (map-set meta id nft)
+      (ok true)))
 
 
 (define-public (transfer (id uint) (sender principal) (recipient principal))
