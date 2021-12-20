@@ -45,7 +45,7 @@
 
 ;; @desc stops minting of a boombox
 ;; @param id; the boombox id
-(define-private (halt-boombox (id uint))
+(define-public (halt-boombox (id uint))
   (let ((details (unwrap! (map-get? boombox id) err-not-found)))
     (asserts! (is-eq contract-caller (get owner details)) err-not-authorized)
     (map-set boombox id (merge details {active: false}))
