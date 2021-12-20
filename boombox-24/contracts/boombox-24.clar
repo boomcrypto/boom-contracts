@@ -18,7 +18,7 @@
 ;; data maps and vars
 ;;
 (define-data-var last-id uint u0)
-(define-data-var boombox-admin principal .boombox-admin-v1)
+(define-data-var boombox-admin principal .boombox-admin-v3)
 ;; boombox-admin contract : boombox id
 (define-map boombox-id principal uint)
 ;; approval maps
@@ -72,7 +72,7 @@
   (ok (var-get last-id)))
 
 (define-read-only (get-token-uri (id uint))
-  (ok (some "ipfs://QmdpoxLdjvkinp1ds8C9TGykoFSDZRdxg5ACedwk4HBjVw/{id}.json")))
+  (ok (some "ipfs://QmXNxi45XM4pmLUXwALMEpmKw63SScVtjd5JdsgQaTWY94/metadata/{id}.json")))
 
 ;; can only be called by boombox admin
 (define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
