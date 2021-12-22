@@ -13,15 +13,20 @@
 (define-data-var last-series-id uint u0)
 
 (define-constant PARTS_PER_MILLION 1000000)
-
+(define-constant OWNER tx-sender)
 ;; scoped variable for boom-mint function
 (define-data-var ctx-mint {series-id: uint, creator: principal} {series-id: u0, creator: tx-sender})
+
+
+(define-map nft-categories uint 
+  {id: uint, name: (string-utf8 256)})
 
 (define-map meta uint
   {series-id: uint,
   number: uint,
   listed: bool,
   price: (optional uint),
+  categories: (list 5 uint),
   fees: (optional principal)})
 
 (define-map index-by-series-item
@@ -32,6 +37,7 @@
 (define-map series-meta uint
   {creator: principal,
     count: uint,
+    default-categories: (list 5 uint),
     uri: (string-ascii 256),
     royalties: uint})
 
@@ -64,10 +70,17 @@
       (var-set last-series-id series-id)
       series-id))
 
-(define-private (mint-boom (number uint))
+(define-public (add-category (id uint) (name (string-utf8 256)))
+  (begin
+    (asserts! (or (is-eq OWNER tx-sender) (is-eq OWNER contract-caller)) err-permission-denied)
+    (ok (map-set nft-categories id {id: id, name: name}))))
+
+(define-private (mint-boom (number uint) (categories (optional (list 5 uint))))
   (let ((id (+ u1 (var-get last-id)))
         (ctx (var-get ctx-mint))
-        (series-id (get series-id ctx)))
+        (series-id (get series-id ctx))
+        (series (unwrap-panic (map-get? series-meta series-id)))
+        (cats (default-to (get default-categories series) categories)))
       (unwrap-panic (nft-mint? boom id (get creator ctx)))
       (var-set last-id id)
       (map-insert meta id
@@ -75,6 +88,7 @@
             number: number,
             listed: false,
             price: none,
+            categories: cats,
             fees: none})
       (map-insert index-by-series-item {series-id: series-id, number: number} id)
       id))
@@ -85,7 +99,7 @@
 ;; @param size; supply of NFTs of series
 ;; @post boom; will be minted for new owner
 (define-public (mint-series (creator principal)
-  (uri (string-ascii 256)) (ids (list 300 uint)) (royalties uint))
+  (uri (string-ascii 256)) (ids (list 300 uint)) (royalties uint) (categories (list 5 uint)))
   (let ((series-id (inc-last-series-id))
     (size (len ids)))
     ;; set scoped variable for mint-boom call
@@ -94,8 +108,20 @@
       {creator: creator,
       count: size,
       uri: uri,
+      default-categories: categories,
       royalties: royalties})
-    (ok {series-id: series-id, ids: (map mint-boom ids)})))
+    (ok {series-id: series-id, ids: (map mint-boom ids (list (some categories)))})))
+
+;; change categories of some nft.
+;; The new categories override the old ones.
+(define-public (change-categories (id uint) (owner principal) (categories (list 5 uint)))
+    (let 
+      ((nft (merge (unwrap! (map-get? meta id) err-no-nft) {categories: categories})))
+      (print nft)
+      (asserts! (is-approved-with-owner id contract-caller owner) err-permission-denied)
+      (map-set meta id nft)
+      (ok true)))
+
 
 (define-public (transfer (id uint) (sender principal) (recipient principal))
   (let ((owner (unwrap! (nft-get-owner? boom id) err-no-nft)))
