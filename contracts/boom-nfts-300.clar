@@ -13,9 +13,13 @@
 (define-data-var last-series-id uint u0)
 
 (define-constant PARTS_PER_MILLION 1000000)
-
+(define-constant OWNER tx-sender)
 ;; scoped variable for boom-mint function
 (define-data-var ctx-mint {series-id: uint, creator: principal} {series-id: u0, creator: tx-sender})
+
+
+(define-map nft-categories uint 
+  {id: uint, name: (string-utf8 256)})
 
 (define-map meta uint
   {series-id: uint,
@@ -65,6 +69,11 @@
   (let ((series-id (+ u1 (var-get last-series-id))))
       (var-set last-series-id series-id)
       series-id))
+
+(define-public (add-category (id uint) (name (string-utf8 256)))
+  (begin
+    (asserts! (or (is-eq OWNER tx-sender) (is-eq OWNER contract-caller)) err-permission-denied)
+    (ok (map-set nft-categories id {id: id, name: name}))))
 
 (define-private (mint-boom (number uint) (categories (optional (list 5 uint))))
   (let ((id (+ u1 (var-get last-id)))
