@@ -39,6 +39,7 @@
     count: uint,
     default-categories: (list 5 uint),
     uri: (string-ascii 256),
+    hash: (optional (buff 64)),
     royalties: uint})
 
 (define-map approvals {owner: principal, operator: principal, id: uint} bool)
@@ -96,10 +97,11 @@
 ;; @desc mints a list of NFTs belonging to the same NFT series
 ;; @param creator; the minter and owner to be of the NFTs
 ;; @param uri; identifier for series meta data
+;; @param hash; optional hash of content for series
 ;; @param size; supply of NFTs of series
 ;; @post boom; will be minted for new owner
 (define-public (mint-series (creator principal)
-  (uri (string-ascii 256)) (ids (list 300 uint)) (royalties uint) (categories (list 5 uint)))
+  (uri (string-ascii 256)) (hash (optional (buff 64))) (ids (list 300 uint)) (royalties uint) (categories (list 5 uint)))
   (let ((series-id (inc-last-series-id))
     (size (len ids)))
     ;; set scoped variable for mint-boom call
@@ -108,6 +110,7 @@
       {creator: creator,
       count: size,
       uri: uri,
+      hash: hash,
       default-categories: categories,
       royalties: royalties})
     (ok {series-id: series-id, ids: (map mint-boom ids (list (some categories)))})))
