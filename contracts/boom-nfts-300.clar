@@ -26,7 +26,7 @@
   number: uint,
   listed: bool,
   price: (optional uint),
-  categories: (list 5 uint),
+  categories: (optional (list 5 uint)),
   fees: (optional principal)})
 
 (define-map index-by-series-item
@@ -37,7 +37,7 @@
 (define-map series-meta uint
   {creator: principal,
     count: uint,
-    default-categories: (list 5 uint),
+    default-categories: (optional (list 5 uint)),
     uri: (string-ascii 256),
     hash: (optional (buff 64)),
     royalties: uint})
@@ -80,8 +80,7 @@
   (let ((id (+ u1 (var-get last-id)))
         (ctx (var-get ctx-mint))
         (series-id (get series-id ctx))
-        (series (unwrap-panic (map-get? series-meta series-id)))
-        (cats (default-to (get default-categories series) categories)))
+        (series (unwrap-panic (map-get? series-meta series-id))))
       (unwrap-panic (nft-mint? boom id (get creator ctx)))
       (var-set last-id id)
       (map-insert meta id
@@ -89,7 +88,7 @@
             number: number,
             listed: false,
             price: none,
-            categories: cats,
+            categories: categories,
             fees: none})
       (map-insert index-by-series-item {series-id: series-id, number: number} id)
       id))
@@ -101,7 +100,7 @@
 ;; @param size; supply of NFTs of series
 ;; @post boom; will be minted for new owner
 (define-public (mint-series (creator principal)
-  (uri (string-ascii 256)) (hash (optional (buff 64))) (ids (list 300 uint)) (royalties uint) (categories (list 5 uint)))
+  (uri (string-ascii 256)) (hash (optional (buff 64))) (ids (list 300 uint)) (royalties uint) (categories (optional (list 5 uint))))
   (let ((series-id (inc-last-series-id))
     (size (len ids)))
     ;; set scoped variable for mint-boom call
@@ -113,11 +112,11 @@
       hash: hash,
       default-categories: categories,
       royalties: royalties})
-    (ok {series-id: series-id, ids: (map mint-boom ids (list (some categories)))})))
+    (ok {series-id: series-id, ids: (map mint-boom ids (list categories))})))
 
 ;; change categories of some nft.
 ;; The new categories override the old ones.
-(define-public (change-categories (id uint) (owner principal) (categories (list 5 uint)))
+(define-public (change-categories (id uint) (owner principal) (categories (optional (list 5 uint))))
     (let 
       ((nft (merge (unwrap! (map-get? meta id) err-no-nft) {categories: categories})))
       (print nft)
