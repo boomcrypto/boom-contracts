@@ -108,6 +108,15 @@
       nft-id (delegatedly-stack id nft-id tx-sender amount-ustx pox-addr locking-period)
       error-minting (err error-minting))))
 
+(define-public (extend-delegation (stacker principal))
+  (let ((details (get-delegation-details stacker))
+        (boombox-details (unwrap! (map-get? boombox (get id details) err-not-found)))
+        (start-block-ht (+ burn-block-height u1)))
+    (asserts! (get active details) err-not-authorized)
+    (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stack-stx stacker (get amount details) (get pox-addr details) start-block-ht (get locking-period details))
+                stack-success (ok stack-success)
+                stack-error (err (to-uint stack-error)))))
+
 ;; function for pool admins
 (define-public (stack-aggregation-commit (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (reward-cycle uint))
   (begin
