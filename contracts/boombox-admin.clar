@@ -108,7 +108,7 @@
       nft-id (delegatedly-stack id nft-id tx-sender amount-ustx pox-addr locking-period)
       error-minting (err error-minting))))
 
-(define-public (extend-delegation (stacker principal))
+(define-public (extend-boomboxing (stacker principal))
   (let ((details (get-delegation-details stacker))
         (boombox-details (unwrap! (map-get? boombox (get id details) err-not-found)))
         (start-block-ht (+ burn-block-height u1)))
