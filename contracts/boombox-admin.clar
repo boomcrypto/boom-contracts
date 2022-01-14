@@ -19,10 +19,11 @@
 (define-map meta {id: uint, nft-id: uint}
   {stacker: principal,
     amount-ustx: uint,
-    stacked-ustx: (optional uint),
-    reward: (optional uint)})
+    stacked-ustx: uint})
 
 (define-map boombox-by-contract {fq-contract: principal, cycle: uint} uint)
+(define-map boombox-by-stacker principal
+  {id: uint, nft-id: uint, amount-ustx: uint})
 
 ;; @desc adds a boombox contract to the list of boomboxes
 ;; @param nft-contract; The NFT contract for this boombox
@@ -59,25 +60,21 @@
 (define-read-only (get-boombox-by-contract (fq-contract <bb-trait>) (cycle uint))
   (map-get? boombox-by-contract {fq-contract: (contract-of fq-contract), cycle: cycle}))
 
-;; (define-private (get-boombox-by-owner (owner principal)) body)
-;; (define-private (get-boombox-by-owner-and-cycle (owner principal) (cycle uint)) body)
-;; (define-private get-boombox-by-owner-and-cycle-and-id (owner principal) (cycle uint)  body)
-;; (define-private get-boombox-by-minimum-amount body)
-;; (define-private boombox-unique body)
-;; (define-private get-stackers-by-id body)
+(define-read-only (get-boombox-by-stacker (stacker principal))
+  (map-get? boombox-by-stacker stacker))
 
-(define-private (get-total-stacked (id uint))
-  (map-get? total-stacked id))
+(define-public (get-total-stacked (id uint))
+  (ok (map-get? total-stacked id)))
 
 (define-private (pox-delegate-stx-and-stack (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
   (let ((ignore-result-revoke (contract-call? 'SP000000000000000000002Q6VF78.pox revoke-delegate-stx))
         (start-block-ht (+ burn-block-height u1))
         (stacker tx-sender))
-      (match (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stx amount-ustx accnt none none)
+      (match (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stx amount-ustx accnt none (some pox-addr))
         success
-            (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stack-stx stacker amount-ustx pox-addr start-block-ht locking-period))
-              stack-success (ok stack-success)
-              stack-error (print (err (to-uint stack-error))))
+              (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stack-stx stacker amount-ustx pox-addr start-block-ht locking-period))
+                stack-success (ok stack-success)
+                stack-error (print (err (to-uint stack-error))))
         error (err (to-uint error)))))
 
 (define-private (delegatedly-stack (id uint) (nft-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
@@ -85,7 +82,7 @@
     success-pox
             (begin
               (asserts! (map-insert meta {id: id, nft-id: nft-id}
-                  {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: (some (get lock-amount success-pox)), reward: none})
+                  {stacker: stacker, amount-ustx: amount-ustx, stacked-ustx: (get lock-amount success-pox)})
                   err-map-function-failed)
               (ok {id: id, nft-id: nft-id, pox: success-pox}))
     error-pox (err error-pox)))
@@ -105,17 +102,31 @@
     (asserts! (is-eq (contract-of fq-contract) (get fq-contract details)) err-invalid-boombox)
     (map-set total-stacked id (+ (default-to u0 (map-get? total-stacked id)) amount-ustx))
     (match (contract-call? fq-contract mint id tx-sender amount-ustx pox-addr locking-period)
-      nft-id (delegatedly-stack id nft-id tx-sender amount-ustx pox-addr locking-period)
+      nft-id (begin
+              (map-set boombox-by-stacker tx-sender {id: id, nft-id: nft-id, amount-ustx: amount-ustx})
+              (delegatedly-stack id nft-id tx-sender amount-ustx pox-addr locking-period))
       error-minting (err error-minting))))
 
+;; function for any user to renew the locking after the last locking period.
+;; any user can call it if a) boombox has indefinite duration and not halted
+;; b) the user did not revoke delegation before the end of the last locking period. 
 (define-public (extend-boomboxing (stacker principal))
-  (let ((details (get-delegation-details stacker))
-        (boombox-details (unwrap! (map-get? boombox (get id details) err-not-found)))
+  (let ((delegation (unwrap! (map-get? boombox-by-stacker stacker) err-not-found))
+        (amount-ustx (get amount-ustx delegation))
+        (details (unwrap! (map-get? boombox (get id delegation)) err-not-found))
         (start-block-ht (+ burn-block-height u1)))
     (asserts! (get active details) err-not-authorized)
-    (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stack-stx stacker (get amount details) (get pox-addr details) start-block-ht (get locking-period details))
-                stack-success (ok stack-success)
-                stack-error (err (to-uint stack-error)))))
+    (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)
+    (match
+      (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stack-stx 
+                      stacker amount-ustx (get pox-addr details) start-block-ht (get locking-period details)))
+        stack-success (ok stack-success)
+        stack-error (err (to-uint stack-error)))))
+
+;; basic iteration of a list of stackers to extend pooling to the next locking period
+;; the call will always succeed, users need to check results individually.
+(define-public (extend-boomboxing-many (stackers (list 100 principal)))
+  (ok (map extend-boomboxing stackers)))
 
 ;; function for pool admins
 (define-public (stack-aggregation-commit (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (reward-cycle uint))
@@ -126,19 +137,18 @@
       error (err (to-uint error)))))
 
 (define-public (nft-details (id uint) (fq-contract <bb-trait>) (nft-id uint))
-  (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta {id: id, nft-id: nft-id})) err-invalid-asset-id) err-invalid-asset-id),
+  (ok {stacked-ustx: (unwrap! (get stacked-ustx (map-get? meta {id: id, nft-id: nft-id})) err-invalid-asset-id),
         owner: (unwrap! (contract-call? fq-contract get-owner nft-id) err-no-asset-owner)}))
 
 (define-public (nft-details-at-block (id uint) (fq-contract <bb-trait>) (nft-id uint) (stacks-tip uint))
-  (ok {stacked-ustx: (unwrap! (unwrap! (get stacked-ustx (map-get? meta {id: id, nft-id: nft-id})) err-invalid-asset-id) err-invalid-asset-id),
+  (ok {stacked-ustx: (unwrap! (get stacked-ustx (map-get? meta {id: id, nft-id: nft-id})) err-invalid-asset-id),
         owner: (unwrap! (contract-call? fq-contract get-owner-at-block nft-id stacks-tip) err-no-asset-owner)}))
 
 (define-data-var ctx-boombox-id uint u0)
+
 (define-private (sum-stacked-ustx (nft-id uint) (ctx {id: uint, total: uint}))
   (match (map-get? meta {id: (get id ctx), nft-id: nft-id})
-    entry (match (get stacked-ustx entry)
-            amount {id: (get id ctx), total: (+ (get total ctx) amount)}
-            ctx)
+    entry {id: (get id ctx), total: (+ (get total ctx) (get stacked-ustx entry))}          
     ctx))
 
 (define-private (get-total-stacked-ustx (id uint) (nfts (list 750 uint)))
