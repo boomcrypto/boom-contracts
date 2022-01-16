@@ -23,6 +23,10 @@ depends_on = []
 path = "contracts/boombox-24.clar"
 depends_on = ["nft-trait", "boombox-trait"]
 
+[contracts.boombox-26]
+path = "contracts/boombox-26.clar"
+depends_on = ["nft-trait", "boombox-trait"]
+
 [contracts.setup]
 path = "contracts/setup.clar"
 depends_on = ["boombox-admin", "boombox-24"]
