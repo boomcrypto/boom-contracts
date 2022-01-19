@@ -2,15 +2,17 @@
 
 ;; TODO
 ;; 1. set ipfs hash in get-token-uri
+;; 2. set boom-admin to 'SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3
+;; 3. remove TODO
 
 (impl-trait .nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
-(define-non-fungible-token bb-26 uint)
+(define-non-fungible-token b-26 uint)
 
 ;; constants
 ;;
 (define-constant deployer tx-sender)
-(define-constant max-supply u10000)
+(define-constant max-supply u0)
 
 ;; err constants
 (define-constant err-not-authorized (err u403))
@@ -42,7 +44,7 @@
 
 ;; operable functions
 (define-read-only (is-approved (id uint) (operator principal))
-  (let ((owner (unwrap! (nft-get-owner? bb-26 id) err-not-found)))
+  (let ((owner (unwrap! (nft-get-owner? b-26 id) err-not-found)))
     (ok (is-approved-with-owner id operator owner))))
 
 (define-public (set-approved (id uint) (operator principal) (approved bool))
@@ -53,9 +55,9 @@
 
 ;; transfer functions
 (define-public (transfer (id uint) (sender principal) (recipient principal))
-  (let ((owner (unwrap! (nft-get-owner? bb-26 id) err-not-found)))
+  (let ((owner (unwrap! (nft-get-owner? b-26 id) err-not-found)))
     (asserts! (is-approved-with-owner id contract-caller owner) err-not-authorized)
-    (nft-transfer? bb-26 id sender recipient)))
+    (nft-transfer? b-26 id sender recipient)))
 
 (define-public (transfer-memo (id uint) (sender principal) (recipient principal) (memo (buff 34)))
   (begin
@@ -64,11 +66,11 @@
     (ok true)))
 
 (define-read-only (get-owner (id uint))
-  (ok (nft-get-owner? bb-26 id)))
+  (ok (nft-get-owner? b-26 id)))
 
 (define-read-only (get-owner-at-block (id uint) (stacks-tip uint))
   (match (get-block-info? id-header-hash stacks-tip)
-    ihh (ok (at-block ihh (nft-get-owner? bb-26 id)))
+    ihh (ok (at-block ihh (nft-get-owner? b-26 id)))
     err-invalid-stacks-tip))
 
 (define-read-only (get-last-token-id)
@@ -83,7 +85,7 @@
     (asserts! (<= next-id max-supply) err-sold-out)
     (asserts! (is-eq bb-id (unwrap! (map-get? boombox-id contract-caller) err-not-authorized)) err-not-authorized)
     (var-set last-id next-id)
-    (try! (nft-mint? bb-26 next-id stacker))
+    (try! (nft-mint? b-26 next-id stacker))
     (ok next-id)))
 
 ;; can only be called by boombox admin
