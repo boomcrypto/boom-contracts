@@ -1,12 +1,8 @@
 ;; Boombox 26
 
-;; TODO
-;; 1. set ipfs hash in get-token-uri
-;; 2. set boom-admin to 'SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3
-;; 3. remove TODO
-
-(impl-trait .nft-trait.nft-trait)
+(impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
+
 (define-non-fungible-token b-26 uint)
 
 ;; constants
@@ -21,7 +17,7 @@
 ;; data maps and vars
 ;;
 (define-data-var last-id uint u0)
-(define-data-var boombox-admin principal .boombox-admin)
+(define-data-var boombox-admin principal .boombox-admin-v3)
 ;; boombox-admin contract : boombox id
 (define-map boombox-id principal uint)
 ;; approval maps
@@ -75,7 +71,7 @@
   (ok (var-get last-id)))
 
 (define-read-only (get-token-uri (id uint))
-  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreifemmqnlcwzezmlzhzrzuedl7ufj7xzqjhrf2famxqjlkybftc5du")))
+  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreigedomh4xuy5ibnltecal72wz26z7m2u5cvtx2l5cfbydrtxhgas4")))
 
 ;; can only be called by boombox admin
 (define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
