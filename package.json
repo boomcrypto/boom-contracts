@@ -4,6 +4,9 @@
   "author": "Boom Crypto Inc <help@boom.money> (https://boom.money)",
   "repository": "https://github.com/boomcrypto/boom-contracts.git",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "test": "mocha",
     "test:watch": "mocha --watch"
