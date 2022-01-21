@@ -1,8 +1,8 @@
 {
-  "name": "clarity-boom-pool",
+  "name": "boom-contracts",
   "version": "0.1.0",
-  "author": "RunRiot <help@riot.ai> (https://riot.ai)",
-  "repository": "https://gitlab.com/riot.ai/clarity-boom-pool.git ",
+  "author": "Boom Crypto Inc <help@boom.money> (https://boom.money)",
+  "repository": "https://github.com/boomcrypto/boom-contracts.git",
   "private": true,
   "scripts": {
     "test": "mocha",
