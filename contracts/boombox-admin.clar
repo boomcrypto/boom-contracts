@@ -3,7 +3,9 @@
 (define-constant dplyr tx-sender)
 (define-constant accnt (as-contract tx-sender))
 ;; M blocks before the prepare phase starts of length N
-(define-constant blocks-before-rewards u200)
+;; 200 for mainnet
+;; 30 for testnet
+(define-constant blocks-before-rewards u30)
 
 (define-data-var last-id uint u0)
 (define-map total-stacked uint uint)
@@ -63,8 +65,11 @@
 (define-read-only (get-boombox-by-stacker (stacker principal))
   (map-get? boombox-by-stacker stacker))
 
-(define-public (get-total-stacked (id uint))
-  (ok (map-get? total-stacked id)))
+(define-read-only (get-total-stacked (id uint))
+  (map-get? total-stacked id))
+
+(define-read-only (get-last-id)
+  (var-get last-id))
 
 (define-private (pox-delegate-stx-and-stack (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
   (let ((ignore-result-revoke (contract-call? 'SP000000000000000000002Q6VF78.pox revoke-delegate-stx))
@@ -94,10 +99,11 @@
 (define-public (delegate-stx (id uint) (fq-contract <bb-trait>) (amount-ustx uint))
   (let ((details (unwrap! (map-get? boombox id) err-not-found))
       (pox-addr (get pox-addr details))
-      (locking-period (get locking-period details)))
+      (locking-period (get locking-period details))
+      (start-of-cycle (reward-cycle-to-burn-height (get cycle details))))
     (asserts! (get active details) err-not-authorized)
     (asserts! (>= amount-ustx (get minimum-amount details)) err-delegate-below-minimum)
-    (asserts! (< (+ burn-block-height blocks-before-rewards) (reward-cycle-to-burn-height (get cycle details))) err-delegate-too-late)
+    (asserts! (< (+ burn-block-height blocks-before-rewards) start-of-cycle) err-delegate-too-late)
     (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)
     (asserts! (is-eq (contract-of fq-contract) (get fq-contract details)) err-invalid-boombox)
     (map-set total-stacked id (+ (default-to u0 (map-get? total-stacked id)) amount-ustx))
