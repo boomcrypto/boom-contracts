@@ -16,6 +16,8 @@
     minimum-amount: uint,
     pox-addr: {version: (buff 1), hashbytes: (buff 20)},
     owner: principal,
+    extendable: bool,
+    open: bool,
     active: bool})
 
 (define-map meta {id: uint, nft-id: uint}
@@ -29,17 +31,23 @@
 
 ;; @desc adds a boombox contract to the list of boomboxes
 ;; @param nft-contract; The NFT contract for this boombox
-;; @param cycle; PoX reward cycle
+;; @param cycle; PoX reward cycle when members can join first
 ;; @param minimum-amount; minimum stacking amount for this boombox
-;; @param owner; owner/admin of this boombox
 ;; @param pox-addr; reward pool address
-(define-public (add-boombox (nft-contract <bb-trait>) (cycle uint) (locking-period uint) (minimum-amount uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (owner principal))
+;; @param owner; owner/admin of this boombox
+;; @param extenable; users can continue after locking period
+;; @param open; users can join at any cycle
+(define-public (add-boombox (nft-contract <bb-trait>) (cycle uint)
+    (locking-period uint) (minimum-amount uint)
+    (pox-addr {version: (buff 1), hashbytes: (buff 20)})
+    (owner principal) (extendable bool) (open bool))
   (let ((fq-contract (contract-of nft-contract))
         (id (+ u1 (var-get last-id))))
     (asserts! (> cycle (current-cycle)) err-too-late)
     (map-insert boombox id
       {fq-contract: fq-contract, cycle: cycle, locking-period: locking-period,
       minimum-amount: minimum-amount, pox-addr: pox-addr, owner: owner,
+      extendable: extendable, open: open,
       active: true })
     (asserts! (map-insert boombox-by-contract {fq-contract: fq-contract, cycle: cycle} id) err-entry-exists)
     (try! (contract-call? nft-contract set-boombox-id id))
@@ -100,10 +108,13 @@
   (let ((details (unwrap! (map-get? boombox id) err-not-found))
       (pox-addr (get pox-addr details))
       (locking-period (get locking-period details))
-      (start-of-cycle (reward-cycle-to-burn-height (get cycle details))))
+      (start-of-first-cycle (reward-cycle-to-burn-height (get cycle details)))
+      (start-of-cycle (reward-cycle-to-burn-height (+ u1 (burn-height-to-reward-cycle burn-block-height)))))
     (asserts! (get active details) err-not-authorized)
     (asserts! (>= amount-ustx (get minimum-amount details)) err-delegate-below-minimum)
-    (asserts! (< (+ burn-block-height blocks-before-rewards) start-of-cycle) err-delegate-too-late)
+    (asserts! (>= start-of-cycle start-of-first-cycle) err-too-early)
+    (asserts! (< (+ burn-block-height blocks-before-rewards)
+                    (if (get open details) start-of-cycle start-of-first-cycle)) err-delegate-too-late)
     (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)
     (asserts! (is-eq (contract-of fq-contract) (get fq-contract details)) err-invalid-boombox)
     (map-set total-stacked id (+ (default-to u0 (map-get? total-stacked id)) amount-ustx))
@@ -121,8 +132,9 @@
         (amount-ustx (get amount-ustx delegation))
         (details (unwrap! (map-get? boombox (get id delegation)) err-not-found))
         (start-block-ht (+ burn-block-height u1)))
+    (asserts! (get extendable details) err-not-authorized)
     (asserts! (get active details) err-not-authorized)
-    (asserts! (>= (stx-get-balance tx-sender) amount-ustx) err-not-enough-funds)
+    (asserts! (>= (stx-get-balance stacker) amount-ustx) err-not-enough-funds)
     (match
       (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stack-stx 
                       stacker amount-ustx (get pox-addr details) start-block-ht (get locking-period details)))

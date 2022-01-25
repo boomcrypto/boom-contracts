@@ -4,8 +4,8 @@ import {
   Chain,
   Account,
   types,
-} from "https://deno.land/x/clarinet@v0.14.1/index.ts";
-import { assertEquals } from "https://deno.land/std@0.99.0/testing/asserts.ts";
+  assertEquals,
+} from "./libs/deps.ts";
 
 function poxAllowContractCaller(account: Account, deployer: Account) {
   return Tx.contractCall(
