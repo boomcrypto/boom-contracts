@@ -55,9 +55,9 @@ Clarinet.test({
 
 [
   { type: "classic", extendable: false, open: false },
-  { type: "indefinite", extendable: true, open: false },
-  { type: "once", extendable: false, open: true },
-  { type: "open indefinite", extendable: true, open: true },
+  { type: "long", extendable: true, open: false },
+  { type: "one-shot", extendable: false, open: true },
+  { type: "indefinite", extendable: true, open: true },
 ].map((config) => {
   Clarinet.test({
     name: `[${config.type}] Ensure that user can delgate stx and stack aggregation commit`,
@@ -225,7 +225,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "[open indefinite] Ensure that a user can extends delegation of any eligible member that joined after first cycle",
+  name: "[indefinite] Ensure that a user can extends delegation of any eligible member that joined after first cycle",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
