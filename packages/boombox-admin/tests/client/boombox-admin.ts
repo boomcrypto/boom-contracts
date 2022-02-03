@@ -1,8 +1,9 @@
 import { Tx, Account, types, Chain } from "../../../common/tests/deps.ts";
 
-
-
-export function poxAllowBoomboxAdminAsContractCaller(boomboxAdminContractId: string, account: Account, ) {
+export function poxAllowBoomboxAdminAsContractCaller(
+  boomboxAdminContractId: string,
+  account: Account
+) {
   return Tx.contractCall(
     "SP000000000000000000002Q6VF78.pox",
     "allow-contract-caller",
@@ -11,21 +12,30 @@ export function poxAllowBoomboxAdminAsContractCaller(boomboxAdminContractId: str
   );
 }
 
-export function addBoombox(boomboxNftContractName: String, user: Account) {
+export function addBoombox(
+  boombox: string,
+  cycle: number,
+  lockingPeriod: number,
+  minAmount: number,
+  owner: Account,
+  extendable: boolean,
+  open: boolean,
+  account: Account
+) {
   return Tx.contractCall(
     "boombox-admin",
     "add-boombox",
     [
-      types.principal(
-        `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${boomboxNftContractName}`
-      ),
-      types.uint(1),
-      types.uint(1),
-      types.uint(40000000),
+      types.principal(boombox), // boombox trait
+      types.uint(cycle),
+      types.uint(lockingPeriod),
+      types.uint(minAmount),
       types.tuple({ version: "0x01", hashbytes: "0x1234" }),
-      types.principal(user.address),
+      types.principal(owner.address),
+      types.boolean(extendable),
+      types.boolean(open),
     ],
-    user.address
+    account.address
   );
 }
 

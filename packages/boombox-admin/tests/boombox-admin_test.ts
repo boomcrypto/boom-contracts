@@ -7,14 +7,13 @@ import {
   assertEquals,
 } from "../../common/tests/deps.ts";
 import {
-  allowContractCaller,
   stackAggregationCommit,
   poxAllowContractCaller,
   addBoombox,
   delegateStx,
   extendBoomboxing,
   extendBoomboxingMany,
-} from "../client/boombox-admin.ts";
+} from "./client/boombox-admin.ts";
 
 Clarinet.test({
   name: "Ensure that burn height and reward cycle are correctly converted",
@@ -68,7 +67,6 @@ Clarinet.test({
       const amount = 10000000000;
       chain.mineEmptyBlock(118);
       let block = chain.mineBlock([
-        allowContractCaller(deployer),
         poxAllowContractCaller(wallet_1, deployer),
         addBoombox(
           boombox,
@@ -84,9 +82,8 @@ Clarinet.test({
       ]);
       assertEquals(block.height, 120);
       block.receipts[0].result.expectOk().expectBool(true);
-      block.receipts[1].result.expectOk().expectBool(true);
-      block.receipts[2].result.expectOk().expectUint(1);
-      const tuple = block.receipts[3].result.expectOk().expectTuple() as any;
+      block.receipts[1].result.expectOk().expectUint(1);
+      const tuple = block.receipts[2].result.expectOk().expectTuple() as any;
       tuple.id.expectUint(1);
       tuple["nft-id"].expectUint(1);
       const pox = tuple.pox.expectTuple();
@@ -109,16 +106,14 @@ Clarinet.test({
       const amount = 10000000000;
       chain.mineEmptyBlock(119);
       let block = chain.mineBlock([
-        allowContractCaller(deployer),
         poxAllowContractCaller(wallet_1, deployer),
         addBoombox(boombox, 1, 1, 40, wallet_1, false, false, wallet_1),
         delegateStx(1, boombox, amount, wallet_1),
       ]);
       assertEquals(block.height, 121);
       block.receipts[0].result.expectOk().expectBool(true);
-      block.receipts[1].result.expectOk().expectBool(true);
-      block.receipts[2].result.expectOk().expectUint(1);
-      block.receipts[3].result.expectErr().expectUint(606); // too late
+      block.receipts[1].result.expectOk().expectUint(1);
+      block.receipts[2].result.expectErr().expectUint(606); // too late
     },
   });
 
@@ -132,7 +127,6 @@ Clarinet.test({
       chain.mineEmptyBlock(119);
 
       let block = chain.mineBlock([
-        allowContractCaller(deployer),
         poxAllowContractCaller(wallet_1, deployer),
         addBoombox(boombox, 1, 1, 40, wallet_1, false, false, wallet_1),
       ]);
@@ -151,15 +145,13 @@ Clarinet.test({
       const amount = 10000000000;
       chain.mineEmptyBlock(100);
       let block = chain.mineBlock([
-        allowContractCaller(deployer),
         poxAllowContractCaller(wallet_1, deployer),
         addBoombox(boombox, 1, 1, 40, wallet_1, false, false, wallet_1),
         delegateStx(1, boombox, amount, wallet_1),
       ]);
       block.receipts[0].result.expectOk().expectBool(true);
-      block.receipts[1].result.expectOk().expectBool(true);
-      block.receipts[2].result.expectOk().expectUint(1);
-      block.receipts[3].result.expectOk().expectTuple();
+      block.receipts[1].result.expectOk().expectUint(1);
+      block.receipts[2].result.expectOk().expectTuple();
 
       block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
       assertEquals(block.height, 103);
@@ -178,15 +170,13 @@ Clarinet.test({
         const amount = 10000000000;
         chain.mineEmptyBlock(118);
         let block = chain.mineBlock([
-          allowContractCaller(deployer),
           poxAllowContractCaller(wallet_1, deployer),
           addBoombox(boombox, 1, 1, 40, wallet_1, true, config.open, wallet_1),
           delegateStx(1, boombox, amount, wallet_1),
         ]);
         assertEquals(block.height, 120);
         block.receipts[0].result.expectOk().expectBool(true);
-        block.receipts[1].result.expectOk().expectBool(true);
-        block.receipts[2].result.expectOk().expectUint(1);
+        block.receipts[1].result.expectOk().expectUint(1);
         const tuple = block.receipts[3].result.expectOk().expectTuple() as any;
         tuple.id.expectUint(1);
         tuple["nft-id"].expectUint(1);
@@ -235,7 +225,6 @@ Clarinet.test({
     const amount = 10000000000;
     chain.mineEmptyBlock(118);
     let block = chain.mineBlock([
-      allowContractCaller(deployer),
       poxAllowContractCaller(wallet_1, deployer),
       poxAllowContractCaller(wallet_2, deployer),
       addBoombox(boombox, 1, 1, 40, wallet_1, true, true, wallet_1),
@@ -243,16 +232,12 @@ Clarinet.test({
     ]);
     assertEquals(block.height, 120);
     block.receipts[0].result.expectOk();
-    block.receipts[1].result.expectOk();
     block.receipts[2].result.expectOk();
     block.receipts[3].result.expectOk();
 
     block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
     assertEquals(block.height, 121);
     block.receipts[0].result.expectOk().expectBool(true);
-    block.receipts[1].result.expectOk().expectBool(true);
-    block.receipts[2].result.expectOk().expectUint(1);
-    block.receipts[3].result.expectOk().expectTuple();
 
     // cycle 1 has started
     chain.mineEmptyBlock(30);
