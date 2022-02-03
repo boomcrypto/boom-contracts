@@ -7,23 +7,6 @@ import {
 } from "https://deno.land/x/clarinet@v0.19.1/index.ts";
 import { assertEquals } from "https://deno.land/std@0.117.0/testing/asserts.ts";
 
-function poxAllowContractCaller(account: Account, deployer: Account) {
-  return Tx.contractCall(
-    "SP000000000000000000002Q6VF78.pox",
-    "allow-contract-caller",
-    [types.principal(deployer.address + ".boombox-admin"), types.none()],
-    account.address
-  );
-}
-
-function allowContractCaller(deployer: Account) {
-  return Tx.contractCall(
-    "boombox-admin",
-    "allow-contract-caller",
-    [types.principal(deployer.address)],
-    deployer.address
-  );
-}
 
 function addBoombox(
   boombox: string,

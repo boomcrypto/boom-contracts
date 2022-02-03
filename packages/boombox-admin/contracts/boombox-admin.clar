@@ -3,7 +3,8 @@
 (define-constant dplyr tx-sender)
 (define-constant accnt (as-contract tx-sender))
 ;; M blocks before the prepare phase starts of length N
-(define-constant blocks-before-rewards u200)
+;; mainnet 200, testnet 30
+(define-constant blocks-before-rewards u30)
 
 (define-data-var last-id uint u0)
 (define-map total-stacked uint uint)
