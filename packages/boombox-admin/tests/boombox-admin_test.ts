@@ -64,7 +64,7 @@ Clarinet.test({
       let deployer = accounts.get("deployer")!;
       let wallet_1 = accounts.get("wallet_1")!;
       const boombox = `${deployer.address}.boombox-simple`;
-      const amount = 10000000000;
+      const amount = 100_000_000_000_000_000;
       chain.mineEmptyBlock(118);
       let block = chain.mineBlock([
         poxAllowContractCaller(wallet_1, deployer),
@@ -123,7 +123,6 @@ Clarinet.test({
       let deployer = accounts.get("deployer")!;
       let wallet_1 = accounts.get("wallet_1")!;
       const boombox = `${deployer.address}.boombox-simple`;
-      const amount = 10000000000;
       chain.mineEmptyBlock(119);
 
       let block = chain.mineBlock([
@@ -167,7 +166,7 @@ Clarinet.test({
         let wallet_1 = accounts.get("wallet_1")!;
         let wallet_2 = accounts.get("wallet_2")!;
         const boombox = `${deployer.address}.boombox-simple`;
-        const amount = 10000000000;
+        const amount = 100_000_000_000_000_000;
         chain.mineEmptyBlock(118);
         let block = chain.mineBlock([
           poxAllowContractCaller(wallet_1, deployer),
@@ -177,7 +176,7 @@ Clarinet.test({
         assertEquals(block.height, 120);
         block.receipts[0].result.expectOk().expectBool(true);
         block.receipts[1].result.expectOk().expectUint(1);
-        const tuple = block.receipts[3].result.expectOk().expectTuple() as any;
+        const tuple = block.receipts[2].result.expectOk().expectTuple() as any;
         tuple.id.expectUint(1);
         tuple["nft-id"].expectUint(1);
         let pox = tuple.pox.expectTuple();
@@ -222,7 +221,7 @@ Clarinet.test({
     let wallet_2 = accounts.get("wallet_2")!;
     let wallet_3 = accounts.get("wallet_3")!;
     const boombox = `${deployer.address}.boombox-simple`;
-    const amount = 10000000000;
+    const amount = 100_000_000_000_000_000;
     chain.mineEmptyBlock(118);
     let block = chain.mineBlock([
       poxAllowContractCaller(wallet_1, deployer),
