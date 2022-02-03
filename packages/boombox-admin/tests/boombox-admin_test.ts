@@ -4,9 +4,9 @@ import {
   Chain,
   Account,
   types,
-} from "https://deno.land/x/clarinet@v0.19.1/index.ts";
-import { assertEquals } from "https://deno.land/std@0.117.0/testing/asserts.ts";
-
+  assertEquals
+} from "../../common/tests/deps.ts";
+import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin.ts";
 
 function addBoombox(
   boombox: string,
@@ -54,11 +54,11 @@ function stackAggregationCommit(cycle: number, account: Account) {
   );
 }
 
-/** 
- * Pox Info 
+/**
+ * Pox Info
  * prepare phase: 30 blocks
  * reward phase: 150 blocks
- * 
+ *
  * last block to delegate: 119
  * first block to stack delegate commit: 120
  */
@@ -69,19 +69,20 @@ Clarinet.test({
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
-    const amount = 10000000000;
+    const amount = 100_000_000_000_000_000;
     chain.mineEmptyBlock(118);
     let block = chain.mineBlock([
-      allowContractCaller(deployer),
-      poxAllowContractCaller(wallet_1, deployer),
+      poxAllowBoomboxAdminAsContractCaller(
+        deployer.address + ".boombox-admin",
+        wallet_1
+      ),
       addBoombox(boombox, 1, 1, 40, wallet_1, wallet_1),
       delegateStx(1, boombox, amount, wallet_1),
-    ]); 
-    assertEquals(block.height, 120)
+    ]);
+    assertEquals(block.height, 120);
     block.receipts[0].result.expectOk().expectBool(true);
-    block.receipts[1].result.expectOk().expectBool(true);
-    block.receipts[2].result.expectOk().expectUint(1);
-    const tuple = block.receipts[3].result.expectOk().expectTuple() as any;
+    block.receipts[1].result.expectOk().expectUint(1);
+    const tuple = block.receipts[2].result.expectOk().expectTuple() as any;
     tuple.id.expectUint(1);
     tuple["nft-id"].expectUint(1);
     const pox = tuple.pox.expectTuple();
@@ -90,7 +91,7 @@ Clarinet.test({
     pox["unlock-burn-height"].expectUint(300);
 
     block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
-    assertEquals(block.height, 121)
+    assertEquals(block.height, 121);
     block.receipts[0].result.expectOk().expectBool(true);
   },
 });
@@ -104,16 +105,17 @@ Clarinet.test({
     const amount = 10000000000;
     chain.mineEmptyBlock(119);
     let block = chain.mineBlock([
-      allowContractCaller(deployer),
-      poxAllowContractCaller(wallet_1, deployer),
+      poxAllowBoomboxAdminAsContractCaller(
+        deployer.address + ".boombox-admin",
+        wallet_1
+      ),
       addBoombox(boombox, 1, 1, 40, wallet_1, wallet_1),
       delegateStx(1, boombox, amount, wallet_1),
-    ]); 
-    assertEquals(block.height, 121)
+    ]);
+    assertEquals(block.height, 121);
     block.receipts[0].result.expectOk().expectBool(true);
-    block.receipts[1].result.expectOk().expectBool(true);
-    block.receipts[2].result.expectOk().expectUint(1);
-    block.receipts[3].result.expectErr().expectUint(606); // too late
+    block.receipts[1].result.expectOk().expectUint(1);
+    block.receipts[2].result.expectErr().expectUint(606); // too late
   },
 });
 
@@ -140,18 +142,19 @@ Clarinet.test({
     const amount = 10000000000;
     chain.mineEmptyBlock(100);
     let block = chain.mineBlock([
-      allowContractCaller(deployer),
-      poxAllowContractCaller(wallet_1, deployer),
+      poxAllowBoomboxAdminAsContractCaller(
+        deployer.address + ".boombox-admin",
+        wallet_1
+      ),
       addBoombox(boombox, 1, 1, 40, wallet_1, wallet_1),
       delegateStx(1, boombox, amount, wallet_1),
     ]);
     block.receipts[0].result.expectOk().expectBool(true);
-    block.receipts[1].result.expectOk().expectBool(true);
-    block.receipts[2].result.expectOk().expectUint(1);
-    block.receipts[3].result.expectOk().expectTuple();
+    block.receipts[1].result.expectOk().expectUint(1);
+    block.receipts[2].result.expectOk().expectTuple();
 
     block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
-    assertEquals(block.height, 103)
+    assertEquals(block.height, 103);
     block.receipts[0].result.expectErr().expectUint(607); // to early
   },
 });
