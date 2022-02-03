@@ -5,7 +5,7 @@
 ;; testnet: ST000000000000000000002AMW42H.bns
 ;; testnet: ST1QK1AZ24R132C0D84EEQ8Y2JDHARDR58SMAYMMW.commission-trait
 
-(impl-trait 'ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait)
+(impl-trait .nft-trait.nft-trait)
 (use-trait commission-trait .commission-trait.commission)
 
 (define-non-fungible-token boom uint)
@@ -15,7 +15,7 @@
 (define-constant PARTS_PER_MILLION 1000000)
 (define-constant OWNER tx-sender)
 ;; scoped variable for boom-mint function
-(define-data-var ctx-mint {series-id: uint, creator: principal} {series-id: u0, creator: tx-sender})
+(define-data-var ctx-mint {series-id: uint, creator: principal, categories: (optional (list 5 uint))} {series-id: u0, creator: tx-sender, categories: none})
 
 
 (define-map nft-categories uint 
@@ -76,7 +76,7 @@
     (asserts! (or (is-eq OWNER tx-sender) (is-eq OWNER contract-caller)) err-permission-denied)
     (ok (map-set nft-categories id {id: id, name: name}))))
 
-(define-private (mint-boom (number uint) (categories (optional (list 5 uint))))
+(define-private (mint-boom (number uint))
   (let ((id (+ u1 (var-get last-id)))
         (ctx (var-get ctx-mint))
         (series-id (get series-id ctx))
@@ -88,7 +88,7 @@
             number: number,
             listed: false,
             price: none,
-            categories: categories,
+            categories: (get categories ctx),
             fees: none})
       (map-insert index-by-series-item {series-id: series-id, number: number} id)
       id))
@@ -104,7 +104,7 @@
   (let ((series-id (inc-last-series-id))
     (size (len ids)))
     ;; set scoped variable for mint-boom call
-    (var-set ctx-mint {series-id: series-id, creator: creator})
+    (var-set ctx-mint {series-id: series-id, creator: creator, categories: categories})
     (map-insert series-meta series-id
       {creator: creator,
       count: size,
@@ -112,7 +112,7 @@
       hash: hash,
       default-categories: categories,
       royalties: royalties})
-    (ok {series-id: series-id, ids: (map mint-boom ids (list categories))})))
+    (ok {series-id: series-id, ids: (map mint-boom ids)})))
 
 ;; change categories of some nft.
 ;; The new categories override the old ones.
