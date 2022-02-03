@@ -1,0 +1,15 @@
+[project]
+name = "Boom"
+
+[contracts.commission-trait]
+path = "contracts/commission.clar"
+depends_on = []
+
+[contracts.nft-trait]
+path = "../common/contracts/nft-trait.clar"
+depends_on = []
+
+
+[contracts.boom-nfts]
+path = "contracts/boom-nfts-300.clar"
+depends_on = ["commission-trait", "nft-trait"]
