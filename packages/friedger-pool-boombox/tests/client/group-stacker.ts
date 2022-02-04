@@ -9,13 +9,20 @@ export function lend(amount: number, user: Account) {
   );
 }
 
-
 export function repay(amount: number, recipient: string, user: Account) {
-    return Tx.contractCall(
-      "group-stacker",
-      "repay",
-      [types.uint(amount), types.principal(recipient)],
-      user.address
-    );
-  }
-  
+  return Tx.contractCall(
+    "group-stacker",
+    "repay",
+    [types.uint(amount), types.principal(recipient)],
+    user.address
+  );
+}
+
+export function delegateStx(boomboxContractId: string, user: Account) {
+  return Tx.contractCall(
+    "group-stacker",
+    "delegate-stx",
+    [types.principal(boomboxContractId)],
+    user.address
+  );
+}

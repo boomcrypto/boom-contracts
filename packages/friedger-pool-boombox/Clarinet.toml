@@ -14,11 +14,16 @@ depends_on = ["boombox-trait"]
 
 [contracts.group-stacker]
 path = "contracts/group-stacker.clar"
-depends_on = ["boombox-trait", "iou-stx", "friedger-pool-payout-hints"]
+depends_on = ["boombox-trait", "iou-stx", "friedger-pool-payout-hints", "fp-boombox"]
 
 
 [contracts.iou-stx]
 path = "contracts/iou-stx.clar"
+depends_on = []
+
+
+[contracts.fp-boombox]
+path = "contracts/fp-boombox.clar"
 depends_on = []
 
 

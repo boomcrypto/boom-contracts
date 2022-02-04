@@ -1,8 +1,8 @@
 (use-trait bb-trait .boombox-trait.boombox-trait)
 
 (define-constant min-balance u120000000000)
-(define-constant boombox-contract .indefinite-boombox-3)
-(define-constant boombox-id u5)
+(define-constant boombox-contract .fp-boombox)
+(define-constant boombox-id u1)
 (define-constant beneficary 'SP4NK85F5Y3KJESRF6S4VXBSTAPE7006V5P7ZNHT)
 
 (define-constant err-low-balance (err u402))
@@ -28,10 +28,10 @@
     (let ((balance (stx-get-balance (as-contract tx-sender))))
         (asserts! (> balance min-balance) err-low-balance)     
         (asserts! (is-eq (contract-of fq-contract) boombox-contract) err-invalid-boombox)   
-        (try! (err-to-uint (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox allow-contract-caller .boombox-admin none))))
+        (try! (err-to-uint (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox allow-contract-caller .boombox-admin none))))
         (try! (as-contract (contract-call? .boombox-admin delegate-stx 
                 boombox-id fq-contract balance)))
-        (try! (err-to-uint (as-contract (contract-call? 'ST000000000000000000002AMW42H.pox revoke-delegate-stx))))
+        (try! (err-to-uint (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox revoke-delegate-stx))))
         (unwrap-panic (as-contract (contract-call? .friedger-pool-payout-hints set-payout-recipient beneficary)))
         (ok true)))
 
