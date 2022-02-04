@@ -1,0 +1,24 @@
+[project]
+name = "boombox-24"
+requirements = []
+costs_version = 2
+
+[contracts.boombox-trait]
+path = "../boombox-admin/contracts/boombox-trait.clar"
+depends_on = []
+
+[contracts.boombox-admin]
+path = "../boombox-admin/contracts/boombox-admin.clar"
+depends_on = ["boombox-trait"]
+
+[contracts.boombox-simple]
+path = "../boombox-admin/contracts/boombox-simple.clar"
+depends_on = []
+
+[contracts.nft-trait]
+path = "../common/contracts/nft-trait.clar"
+depends_on = []
+
+[contracts.boombox]
+path = "contracts/boombox-28.clar"
+depends_on = ["nft-trait", "boombox-trait"]
