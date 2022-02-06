@@ -1,10 +1,10 @@
-import { Clarinet, Tx, Chain, Account, types, assertEquals } from "../../../common/tests/deps.ts";
+import { Clarinet, Tx, Chain, Account, types, assertEquals } from "./deps.ts";
 
-export function poxAllowBoomboxAdminAsContractCaller(boomboxAdminContractId: string, account: Account) {
+export function poxAllowContractCaller(account: Account, deployer: Account) {
   return Tx.contractCall(
     "SP000000000000000000002Q6VF78.pox",
     "allow-contract-caller",
-    [types.principal(boomboxAdminContractId), types.none()],
+    [types.principal(deployer.address + ".boombox-admin"), types.none()],
     account.address
   );
 }
