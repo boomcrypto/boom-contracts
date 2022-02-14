@@ -1,6 +1,6 @@
 ;; Boombox 28
 
-(impl-trait .nft-trait.nft-trait)
+(impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
 
 (define-non-fungible-token b-28 uint)
@@ -17,7 +17,7 @@
 ;; data maps and vars
 ;;
 (define-data-var last-id uint u0)
-(define-data-var boombox-admin principal .boombox-admin)
+(define-data-var boombox-admin principal .boombox-admin-v3)
 ;; boombox-admin contract : boombox id
 (define-map boombox-id principal uint)
 ;; approval maps
