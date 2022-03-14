@@ -1,18 +1,14 @@
-;; Boombox 28
+;; Boombox 30
 
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
 
-(define-non-fungible-token b-28 uint)
+(define-non-fungible-token b-30 uint)
 
 ;; constants
 ;;
 (define-constant deployer tx-sender)
-
-;; err constants
-(define-constant err-not-authorized (err u403))
-(define-constant err-not-found (err u404))
-(define-constant err-invalid-stacks-tip (err u608))
+(define-constant creator 'SP1PGB1T5KRNWZGDS1JEV7775HJMYBSEM2Z333Y8Y)
 
 ;; data maps and vars
 ;;
@@ -38,7 +34,7 @@
 
 ;; operable functions
 (define-read-only (is-approved (id uint) (operator principal))
-  (let ((owner (unwrap! (nft-get-owner? b-28 id) err-not-found)))
+  (let ((owner (unwrap! (nft-get-owner? b-30 id) err-not-found)))
     (ok (is-approved-with-owner id operator owner))))
 
 (define-public (set-approved (id uint) (operator principal) (approved bool))
@@ -49,9 +45,9 @@
 
 ;; transfer functions
 (define-public (transfer (id uint) (sender principal) (recipient principal))
-  (let ((owner (unwrap! (nft-get-owner? b-28 id) err-not-found)))
+  (let ((owner (unwrap! (nft-get-owner? b-30 id) err-not-found)))
     (asserts! (is-approved-with-owner id contract-caller owner) err-not-authorized)
-    (nft-transfer? b-28 id sender recipient)))
+    (nft-transfer? b-30 id sender recipient)))
 
 (define-public (transfer-memo (id uint) (sender principal) (recipient principal) (memo (buff 34)))
   (begin
@@ -60,25 +56,25 @@
     (ok true)))
 
 (define-read-only (get-owner (id uint))
-  (ok (nft-get-owner? b-28 id)))
+  (ok (nft-get-owner? b-30 id)))
 
 (define-read-only (get-owner-at-block (id uint) (stacks-tip uint))
   (match (get-block-info? id-header-hash stacks-tip)
-    ihh (ok (at-block ihh (nft-get-owner? b-28 id)))
+    ihh (ok (at-block ihh (nft-get-owner? b-30 id)))
     err-invalid-stacks-tip))
 
 (define-read-only (get-last-token-id)
   (ok (var-get last-id)))
 
 (define-read-only (get-token-uri (id uint))
-  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreicv3rdmexuo26xgqgt7xi7t3tswyozwr75hmsh25hs5pjsc3hnaum")))
+  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreibszx62vqkce7pefr6xtcqvyec7lo5xdjy6c7r3dhfd5bkl3wyvku")))
 
 ;; can only be called by boombox admin
 (define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
   (let ((next-id (+ u1 (var-get last-id))))
     (asserts! (is-eq bb-id (unwrap! (map-get? boombox-id contract-caller) err-not-authorized)) err-not-authorized)
     (var-set last-id next-id)
-    (try! (nft-mint? b-28 next-id stacker))
+    (try! (nft-mint? b-30 next-id stacker))
     (ok next-id)))
 
 ;; can only be called by boombox admin
@@ -138,3 +134,16 @@
     (try! (nft-transfer? boom id owner tx-sender))
     (print {action: "buy-in-ustx", id: id, price: price, royalties: royalties})
     (ok true)))
+
+;; errors
+(define-constant err-not-creator (err u400))
+(define-constant err-permission-denied (err u403))
+(define-constant err-no-nft (err u404))
+(define-constant err-listing (err u405))
+(define-constant err-no-owner (err u406))
+(define-constant err-royalties (err u500))
+(define-constant err-no-fees (err u501))
+(define-constant err-wrong-fees (err u502))
+(define-constant err-not-authorized (err u403))
+(define-constant err-not-found (err u404))
+(define-constant err-invalid-stacks-tip (err u608))
