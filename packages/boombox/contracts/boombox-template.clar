@@ -4,8 +4,10 @@
 
 ;; Boombox 30
 
-(impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
+(impl-trait .nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
+(use-trait commission-trait .commission-trait.commission)
+
 
 (define-non-fungible-token b-xx uint)
 
@@ -23,6 +25,13 @@
 ;; approval maps
 (define-map approvals {owner: principal, operator: principal, id: uint} bool)
 (define-map approvals-all {owner: principal, operator: principal} bool)
+
+
+(define-map market-data uint
+  {nft-id: uint,
+  listed: bool,
+  price: (optional uint),
+  fees: (optional principal)})
 
 ;; private functions
 (define-private (is-approved-with-owner (id uint) (operator principal) (owner principal))
@@ -95,48 +104,48 @@
     (var-set boombox-admin admin)
     (ok true)))
 
+
 (define-public (list-in-ustx (id uint) (price uint) (fees <commission-trait>))
-  (let ((nft (unwrap! (map-get? meta id) err-no-nft))
-      (owner (unwrap! (nft-get-owner? boom id) err-no-nft))
-      (listing (merge nft {price: (some price), listed: true, fees: (some (contract-of fees))})))
+  (let (
+      (owner (unwrap! (nft-get-owner? b-xx id) err-no-nft))
+      (listing {price: (some price), nft-id: id, listed: true, fees: (some (contract-of fees))}))
     ;; rule: only owner can list
     (asserts! (or (is-eq owner tx-sender) (is-eq owner contract-caller)) err-permission-denied)
-    (map-set meta id listing)
+    (map-set market-data id listing)
     (print (merge listing {action: "list-in-ustx", id: id}))
     (ok true)))
 
 (define-public (unlist-in-ustx (id uint))
-  (let ((nft (unwrap! (map-get? meta id) err-no-nft))
-      (owner (unwrap! (nft-get-owner? boom id) err-no-nft))
-      (listing (merge nft {price: none, listed: false, fees: none})))
+  (let ((nft (unwrap! (map-get? market-data id) err-no-nft))
+      (owner (unwrap! (nft-get-owner? b-xx id) err-no-nft)))
     ;; rule: only owner can unlist
     (asserts! (or (is-eq owner tx-sender) (is-eq owner contract-caller)) err-permission-denied)
-    (map-set meta id listing)
+    (map-delete market-data id) ;; maybe redundant after some time, should we delete it?
     (print {action: "unlist-in-ustx", id: id})
     (ok true)))
 
 (define-public (buy-in-ustx (id uint) (fees <commission-trait>))
-  (let ((nft (unwrap! (map-get? meta id) err-no-nft))
-    (owner (unwrap! (nft-get-owner? boom id) err-no-owner))
+  (let ((nft (unwrap! (map-get? market-data id) err-no-nft))
+    (owner (unwrap! (nft-get-owner? b-xx id) err-no-owner))
     (price (unwrap! (get price nft) err-listing))
-    (nft-fees (unwrap! (get fees nft) err-no-fees))
-    (metadata (unwrap! (map-get? series-meta (get series-id nft)) err-no-nft))
-    (royalties ( / (* price u1000000) (get royalties metadata))))
+    (nft-fees (unwrap! (get fees nft) err-no-fees)))
+    ;; (metadata (unwrap! (map-get? series-meta (get series-id nft)) err-no-nft))
+    ;; (royalties ( / (* price u1000000) (get royalties metadata))))
     ;; rule 1: nft must be listed
     (asserts! (get listed nft) err-listing)
     ;; rule 2: same fee contract used
     (asserts! (is-eq (contract-of fees) nft-fees) err-wrong-fees)
-    (map-set meta id (merge nft {price: none, listed: false, fees: none}))
+    (map-set market-data id (merge nft {price: none, listed: false, fees: none}))
     (print {id: id, price: none, listed: false})
     ;; royalties are paid
-    (try! (stx-transfer? royalties tx-sender (get creator metadata)))
+    ;; (try! (stx-transfer? royalties tx-sender (get creator metadata)))
     ;; price in STX is sent to owner
-    (try! (stx-transfer? (- price royalties) tx-sender owner))
+    ;; (try! (stx-transfer? (- price royalties) tx-sender owner))
     ;; marketplace fees are paid
     (try! (contract-call? fees pay id price))
     ;; buyer of listed nft can transfer from owner
-    (try! (nft-transfer? boom id owner tx-sender))
-    (print {action: "buy-in-ustx", id: id, price: price, royalties: royalties})
+    (try! (nft-transfer? b-xx id owner tx-sender))
+    (print {action: "buy-in-ustx", id: id, price: price, owner: owner})
     (ok true)))
 
 ;; errors

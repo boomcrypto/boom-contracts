@@ -9,7 +9,7 @@ depends_on = []
 
 [contracts.boombox-admin]
 path = "../boombox-admin/contracts/boombox-admin.clar"
-depends_on = ["boombox-trait"]
+depends_on = ["boombox-trait", "commission-trait"]
 
 [contracts.boombox-simple]
 path = "../boombox-admin/contracts/boombox-simple.clar"
@@ -19,6 +19,10 @@ depends_on = []
 path = "../common/contracts/nft-trait.clar"
 depends_on = []
 
+[contracts.commission-trait]
+path = "../common/contracts/commission.clar"
+depends_on = []
+
 [contracts.boombox]
 path = "contracts/boombox-28.clar"
-depends_on = ["nft-trait", "boombox-trait"]
+depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
