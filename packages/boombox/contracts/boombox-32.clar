@@ -1,6 +1,5 @@
-;; TODO: change get-token-uri function response
-
 ;; Boombox 32
+
 
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
@@ -10,7 +9,11 @@
 ;; constants
 ;;
 (define-constant deployer tx-sender)
-(define-constant creator 'SP1PGB1T5KRNWZGDS1JEV7775HJMYBSEM2Z333Y8Y)
+
+;; err constants
+(define-constant err-not-authorized (err u403))
+(define-constant err-not-found (err u404))
+(define-constant err-invalid-stacks-tip (err u608))
 
 ;; data maps and vars
 ;;
@@ -92,60 +95,3 @@
     (asserts! (is-eq contract-caller deployer) err-not-authorized)
     (var-set boombox-admin admin)
     (ok true)))
-
-(define-public (list-in-ustx (id uint) (price uint) (fees <commission-trait>))
-  (let ((nft (unwrap! (map-get? meta id) err-no-nft))
-      (owner (unwrap! (nft-get-owner? boom id) err-no-nft))
-      (listing (merge nft {price: (some price), listed: true, fees: (some (contract-of fees))})))
-    ;; rule: only owner can list
-    (asserts! (or (is-eq owner tx-sender) (is-eq owner contract-caller)) err-permission-denied)
-    (map-set meta id listing)
-    (print (merge listing {action: "list-in-ustx", id: id}))
-    (ok true)))
-
-(define-public (unlist-in-ustx (id uint))
-  (let ((nft (unwrap! (map-get? meta id) err-no-nft))
-      (owner (unwrap! (nft-get-owner? boom id) err-no-nft))
-      (listing (merge nft {price: none, listed: false, fees: none})))
-    ;; rule: only owner can unlist
-    (asserts! (or (is-eq owner tx-sender) (is-eq owner contract-caller)) err-permission-denied)
-    (map-set meta id listing)
-    (print {action: "unlist-in-ustx", id: id})
-    (ok true)))
-
-(define-public (buy-in-ustx (id uint) (fees <commission-trait>))
-  (let ((nft (unwrap! (map-get? meta id) err-no-nft))
-    (owner (unwrap! (nft-get-owner? boom id) err-no-owner))
-    (price (unwrap! (get price nft) err-listing))
-    (nft-fees (unwrap! (get fees nft) err-no-fees))
-    (metadata (unwrap! (map-get? series-meta (get series-id nft)) err-no-nft))
-    (royalties ( / (* price u1000000) (get royalties metadata))))
-    ;; rule 1: nft must be listed
-    (asserts! (get listed nft) err-listing)
-    ;; rule 2: same fee contract used
-    (asserts! (is-eq (contract-of fees) nft-fees) err-wrong-fees)
-    (map-set meta id (merge nft {price: none, listed: false, fees: none}))
-    (print {id: id, price: none, listed: false})
-    ;; royalties are paid
-    (try! (stx-transfer? royalties tx-sender (get creator metadata)))
-    ;; price in STX is sent to owner
-    (try! (stx-transfer? (- price royalties) tx-sender owner))
-    ;; marketplace fees are paid
-    (try! (contract-call? fees pay id price))
-    ;; buyer of listed nft can transfer from owner
-    (try! (nft-transfer? boom id owner tx-sender))
-    (print {action: "buy-in-ustx", id: id, price: price, royalties: royalties})
-    (ok true)))
-
-;; errors
-(define-constant err-not-creator (err u400))
-(define-constant err-permission-denied (err u403))
-(define-constant err-no-nft (err u404))
-(define-constant err-listing (err u405))
-(define-constant err-no-owner (err u406))
-(define-constant err-royalties (err u500))
-(define-constant err-no-fees (err u501))
-(define-constant err-wrong-fees (err u502))
-(define-constant err-not-authorized (err u403))
-(define-constant err-not-found (err u404))
-(define-constant err-invalid-stacks-tip (err u608))
