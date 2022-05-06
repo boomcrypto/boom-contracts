@@ -73,7 +73,7 @@
   (ok (var-get last-id)))
 
 (define-read-only (get-token-uri (id uint))
-  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreigzei42ktazjl3b6ounitwazbmcz7zzn5vb7poevx2xoroau7ftnm")))
+  (ok (some "https://gateway.pinata.cloud/ipfs/QmWYCucZfchX7RmPHxZpxnsjZBV1pd6ZQgVvuinMDe1HkX/{id}.json")))
 
 ;; can only be called by boombox admin
 (define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
