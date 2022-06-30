@@ -6,6 +6,8 @@ telemetry = true
 requirements = []
 cache_dir = "/Users/amrro/Developer/boom/boom-contracts/packages/boom-marketplace/./.requirements"
 boot_contracts = ["pox", "costs-v2", "bns"]
+
+
 [contracts.boom-market]
 path = "./contracts/boom-market-v1.clar"
 

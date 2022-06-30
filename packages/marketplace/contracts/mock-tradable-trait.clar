@@ -12,7 +12,7 @@
     (ok (map-set registery id address)))
 
 
-(define-public (get-owner (id uint))
+(define-read-only (get-owner (id uint))
   (ok (map-get? registery id)))
 
 (define-public (transfer (id uint) (from principal) (to principal)) 
