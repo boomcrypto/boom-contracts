@@ -1,9 +1,16 @@
 import {Tx, types} from "https://deno.land/x/clarinet@v0.31.1/index.ts";
+import MockTradableContract from "./mock-tradable-contract.ts";
 
 const CONTRACT_NAME = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.boom-market' as const;
 const MOCK_TRADABLE_TRAIT = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.mock-tradable-trait' as const;
 
-type ContractFun = 'list-asset' | 'get-listing' | 'set-listings-frozen' | 'unlist-asset' | 'purchase-asset';
+type ContractFun =
+    'list-asset'
+    | 'get-listing'
+    | 'set-listings-frozen'
+    | 'unlist-asset'
+    | 'purchase-asset'
+    | 'set-royalty';
 
 const call = (fun: ContractFun, args: Array<string>, sender: string): Tx => {
     return Tx.contractCall(CONTRACT_NAME, fun, args, sender)
@@ -31,6 +38,9 @@ type ListingFrozenOptions = {
 
 
 const BoomMarketPlace = class {
+    static MINIMUM_PRICE = 1_000_000 as const;
+    static MINIMUM_COMMISSION = 250 as const;
+
     static ErrorCodes = {
         paymentFailed: 1 as const,
         transferFailed: 2 as const,
@@ -42,15 +52,22 @@ const BoomMarketPlace = class {
         commissionPaymentFailed: 8 as const,
         royaltyPaymentFailed: 9 as const,
     }
-    
-    static listAsset = ({address, id, price = 1_000_000, commission = 1_000, sender}: ListAssetOptions): Tx =>
-        call('list-asset', [
-                types.principal(MOCK_TRADABLE_TRAIT),
-                types.uint(id),
-                types.uint(price),
-                types.uint(commission)
-            ],
-            sender ?? address)
+
+    static listAsset =
+        ({
+             address,
+             id,
+             price = BoomMarketPlace.MINIMUM_PRICE,
+             commission = BoomMarketPlace.MINIMUM_COMMISSION,
+             sender
+         }: ListAssetOptions): Tx =>
+            call('list-asset', [
+                    types.principal(MOCK_TRADABLE_TRAIT),
+                    types.uint(id),
+                    types.uint(price),
+                    types.uint(commission)
+                ],
+                sender ?? address)
 
     static setListingsFrozen = ({sender, shouldFrozen}: ListingFrozenOptions): Tx =>
         call(
@@ -91,6 +108,44 @@ const BoomMarketPlace = class {
             address
         )
 
+    static mintAndListNewAsset = (
+        {
+            address,
+            id,
+            price = BoomMarketPlace.MINIMUM_PRICE,
+            commission = BoomMarketPlace.MINIMUM_COMMISSION,
+            sender
+        }: ListAssetOptions
+    ): Tx[] => {
+        const tx = MockTradableContract.mint({address: address, id: id})
+
+        const listingTx = BoomMarketPlace.listAsset({
+            address: address,
+            id: id,
+            price,
+            commission,
+            sender
+        });
+
+        return [tx, listingTx];
+    }
+
+    static setRoyalty =
+        ({
+             royal,
+             percent,
+             sender
+         }: { royal: string, percent: number, sender: string }) => {
+            return call(
+                'set-royalty',
+                [
+                    types.principal(MOCK_TRADABLE_TRAIT),
+                    types.principal(royal),
+                    types.uint(percent)
+                ],
+                sender
+            )
+        }
 
 }
 

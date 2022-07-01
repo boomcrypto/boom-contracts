@@ -60,14 +60,14 @@ balance = 100_000_000_000_000
 
 [accounts.wallet_8]
 mnemonic = "female adjust gallery certain visit token during great side clown fitness like hurt clip knife warm bench start reunion globe detail dream depend fortune"
-balance = 100_000_000_000_000
+balance = 999_999 # DON'T CHANGE, TESTS DEPEND ON IT.
 # secret_key: 6a1a754ba863d7bab14adbbc3f8ebb090af9e871ace621d3e5ab634e1422885e01
 # stx_address: ST3NBRSFKX28FQ2ZJ1MAKX58HKHSDGNV5N7R21XCP
 # btc_address: n2v875jbJ4RjBnTjgbfikDfnwsDV5iUByw
 
 [accounts.wallet_9]
 mnemonic = "shadow private easily thought say logic fault paddle word top book during ignore notable orange flight clock image wealth health outside kitten belt reform"
-balance = 100_000_000_000_000
+balance = 1_000_00 # DON'T CHANGE, TESTS DEPEND ON IT.
 # secret_key: de433bdfa14ec43aa1098d5be594c8ffb20a31485ff9de2923b2689471c401b801
 # stx_address: STNHKEPYEPJ8ET55ZZ0M5A34J0R3N5FM2CMMMAZ6
 # btc_address: mjSrB3wS4xab3kYqFktwBzfTdPg367ZJ2d
