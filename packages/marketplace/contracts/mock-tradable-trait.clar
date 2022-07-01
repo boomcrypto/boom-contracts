@@ -8,7 +8,7 @@
 (define-map registery uint principal)
 
 ;; public functions
-(define-public (register (id uint) (address principal)) 
+(define-public (mint (id uint) (address principal))
     (ok (map-set registery id address)))
 
 

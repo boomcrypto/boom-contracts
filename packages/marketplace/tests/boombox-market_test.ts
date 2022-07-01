@@ -1,15 +1,22 @@
 import {assertEquals, Chain, Clarinet, Tx} from "../../common/tests/deps.ts";
 import TradableTraitContractMock from "./utils/mock-tradable-contract.ts";
-import MockTradableTraitContract from "./utils/mock-tradable-contract.ts";
+import MockTradableContract from "./utils/mock-tradable-contract.ts";
 import BoomMarketPlace from "./utils/boom-marketplace.ts";
 
 
-const listNewAsset = (address: string, id: number): Tx[] => {
-    const tx = MockTradableTraitContract.register({address: address, id: id})
+const listNewAsset = (
+    address: string,
+    id: number,
+    price = 100_0000,
+    commission = 1_000
+): Tx[] => {
+    const tx = MockTradableContract.mint({address: address, id: id})
 
     const listingTx = BoomMarketPlace.listAsset({
         address: address,
         id: id,
+        price,
+        commission
     });
 
     return [tx, listingTx];
@@ -21,9 +28,9 @@ Clarinet.test({
     fn: (chain, accounts) => {
         const wallet_1 = accounts.get("wallet_1")!;
 
-        // Register token u1 to wallet_1.
+        // Mint token u1 to wallet_1.
         chain.mineBlock([
-            TradableTraitContractMock.register({address: wallet_1.address, id: 1})
+            TradableTraitContractMock.mint({address: wallet_1.address, id: 1})
         ]);
 
         // Given low commission.
@@ -36,7 +43,9 @@ Clarinet.test({
             })
         ]);
         // err-commission-or-price-too-low u6
-        block.receipts[0].result.expectErr().expectUint(6);
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.commissionOrPriceTooLow);
     }
 })
 
@@ -45,9 +54,9 @@ Clarinet.test({
     fn: (chain: Chain, accounts) => {
         const wallet_1 = accounts.get("wallet_1")!;
 
-        // Register token to wallet_1.
+        // Mint token to wallet_1.
         chain.mineBlock([
-            TradableTraitContractMock.register({address: wallet_1.address, id: 1})
+            TradableTraitContractMock.mint({address: wallet_1.address, id: 1})
         ]);
 
         // Given low price for listing.
@@ -60,7 +69,9 @@ Clarinet.test({
             })
         ]);
         // err-commission-or-price-too-low u6
-        block.receipts[0].result.expectErr().expectUint(6);
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.commissionOrPriceTooLow);
     }
 })
 
@@ -70,9 +81,9 @@ Clarinet.test({
         const wallet_1 = accounts.get("wallet_1")!;
         const wallet_2 = accounts.get("wallet_2")!;
 
-        // Register token to wallet_1.
+        // Mint token to wallet_1.
         chain.mineBlock([
-            TradableTraitContractMock.register({address: wallet_1.address, id: 1})
+            TradableTraitContractMock.mint({address: wallet_1.address, id: 1})
         ]);
 
         // Given listing asset by non-owner principal.
@@ -84,7 +95,9 @@ Clarinet.test({
         ]);
 
         // err-not-allowed u3
-        block.receipts[0].result.expectErr().expectUint(3);
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.notAllowed);
     }
 })
 
@@ -101,20 +114,23 @@ Clarinet.test({
         ]);
 
         // err-tradable-not-found u5
-        block.receipts[0].result.expectErr().expectUint(5)
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.tradableNotFound)
     }
 })
 
 
 Clarinet.test({
     name: "List asset, duplicate entry",
+    ignore: true,
     fn: (chain, accounts) => {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
 
-        // Register token u1 to wallet_1.
+        // Mint token u1 to wallet_1.
         chain.mineBlock([
-            TradableTraitContractMock.register({address: wallet_1.address, id: 1})
+            TradableTraitContractMock.mint({address: wallet_1.address, id: 1})
         ]);
 
         chain.mineBlock([
@@ -137,7 +153,9 @@ Clarinet.test({
         ]);
 
         // err-duplicate-entry u4
-        block.receipts[0].result.expectErr().expectUint(4)
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.duplicateEntry)
     }
 })
 
@@ -147,8 +165,8 @@ Clarinet.test({
     fn: (chain, accounts) => {
         const wallet_1 = accounts.get("wallet_1")!;
 
-        // Register token u1 to wallet_1.
-        const tx = TradableTraitContractMock.register({address: wallet_1.address, id: 1});
+        // Mint token u1 to wallet_1.
+        const tx = TradableTraitContractMock.mint({address: wallet_1.address, id: 1});
         chain.mineBlock([tx]);
 
         const tx1 = BoomMarketPlace.listAsset({
@@ -157,7 +175,9 @@ Clarinet.test({
         });
         const block = chain.mineBlock([tx1]);
 
-        block.receipts[0].result.expectOk().expectBool(true);
+        block.receipts[0].result
+            .expectOk()
+            .expectBool(true);
     }
 })
 
@@ -181,7 +201,9 @@ Clarinet.test({
         const block = chain.mineBlock([tx2]);
 
         // err-listings-frozen u7
-        block.receipts[0].result.expectErr().expectUint(7);
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.listingsFrozen);
     }
 })
 
@@ -189,18 +211,23 @@ Clarinet.test({
     name: 'Get Listing, Success',
     fn: (chain, accounts) => {
         const wallet_1 = accounts.get('wallet_1')!;
-        const ID = 10;
+        const TOKEN_ID = 10;
+        const COMMISSION = 2_333;
+        const PRICE = 1_222_333;
 
-        // Register u10 to wallet_1.
-        chain.mineBlock(listNewAsset(wallet_1.address, ID))
+        // Mint TOKEN_ID to wallet_1.
+        chain.mineBlock(listNewAsset(wallet_1.address, TOKEN_ID, PRICE, COMMISSION))
 
-        const tx = BoomMarketPlace.getListing({address: wallet_1.address, id: ID});
-        const block = chain.mineBlock([tx]);
+        const block = chain.mineBlock([
+            BoomMarketPlace.getListing({address: wallet_1.address, id: TOKEN_ID})
+        ]);
 
-        const result = <any>block.receipts[0].result.expectOk().expectTuple();
-        result["commission"].expectUint(1_000);
+        const result = <any>block.receipts[0].result
+            .expectOk()
+            .expectTuple();
+        result["commission"].expectUint(COMMISSION);
         result["owner"].expectPrincipal(wallet_1.address);
-        result["price"].expectUint(1_000_000)
+        result["price"].expectUint(PRICE)
     }
 })
 
@@ -209,13 +236,15 @@ Clarinet.test({
     name: 'Get Listing of non-existent',
     fn: (chain, accounts) => {
         const wallet_1 = accounts.get('wallet_1')!;
-        const ID = 10;
+        const TOKEN_ID = 10;
 
-        const tx = BoomMarketPlace.getListing({address: wallet_1.address, id: ID});
+        const tx = BoomMarketPlace.getListing({address: wallet_1.address, id: TOKEN_ID});
         const block = chain.mineBlock([tx]);
 
         // err-tradable-not-found u5
-        block.receipts[0].result.expectErr().expectUint(5);
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.tradableNotFound);
     }
 })
 
@@ -223,21 +252,24 @@ Clarinet.test({
     name: 'Unlist asset, success',
     fn: (chain, accounts) => {
         const wallet_1 = accounts.get('wallet_1')!;
-        const ID = 10;
+        const TOKEN_ID = 10;
 
-        // Register u10 to wallet_1.
-        chain.mineBlock(listNewAsset(wallet_1.address, ID))
+        // Mint TOKEN_ID to wallet_1.
+        chain.mineBlock(listNewAsset(wallet_1.address, TOKEN_ID))
 
-        const unlistTx = BoomMarketPlace.unlistAsset({
-            address: wallet_1.address,
-            id: ID
-        });
-        const getListingTx = BoomMarketPlace.getListing({address: wallet_1.address, id: ID});
-        const block = chain.mineBlock([unlistTx, getListingTx]);
+        const block = chain.mineBlock([
+            BoomMarketPlace.unlistAsset({
+                address: wallet_1.address,
+                id: TOKEN_ID
+            }),
+            BoomMarketPlace.getListing({address: wallet_1.address, id: TOKEN_ID})
+        ]);
 
         block.receipts[0].result.expectOk().expectBool(true);
         // err-tradable-not-found u5
-        block.receipts[1].result.expectErr().expectUint(5);
+        block.receipts[1].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.tradableNotFound);
     }
 })
 
@@ -247,14 +279,17 @@ Clarinet.test({
     fn: (chain, accounts) => {
         const wallet_1 = accounts.get('wallet_1')!;
 
-        const unlistTx = BoomMarketPlace.unlistAsset({
-            address: wallet_1.address,
-            id: 10
-        });
-        const block = chain.mineBlock([unlistTx]);
+        const block = chain.mineBlock([
+            BoomMarketPlace.unlistAsset({
+                address: wallet_1.address,
+                id: 10
+            })
+        ]);
 
         // err-tradable-not-found u5
-        block.receipts[0].result.expectErr().expectUint(5);
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.tradableNotFound);
     }
 })
 
@@ -263,18 +298,22 @@ Clarinet.test({
     fn: (chain, accounts) => {
         const wallet_1 = accounts.get('wallet_1')!;
         const wallet_2 = accounts.get('wallet_2')!;
+        const TOKEN_ID = 33;
 
-        // Register u10 to wallet_1.
-        chain.mineBlock(listNewAsset(wallet_1.address, 10))
+        // Mint TOKEN_ID to wallet_1.
+        chain.mineBlock(listNewAsset(wallet_1.address, TOKEN_ID))
 
-        const unlistTx = BoomMarketPlace.unlistAsset({
-            address: wallet_2.address,
-            id: 10
-        });
-        const block = chain.mineBlock([unlistTx]);
+        const block = chain.mineBlock([
+            BoomMarketPlace.unlistAsset({
+                address: wallet_2.address,
+                id: TOKEN_ID,
+            })
+        ]);
 
         // err-not-allowed u3
-        block.receipts[0].result.expectErr().expectUint(3);
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.notAllowed);
     }
 })
 
@@ -285,7 +324,7 @@ Clarinet.test({
         const deployer = accounts.get('deployer')!;
         const seller = accounts.get('wallet_1')!;
         const buyer = accounts.get('wallet_2')!;
-        const ID = 33;
+        const TOKEN_ID = 33;
 
         // GIVEN
         const PRICE = 1_000_000;
@@ -295,11 +334,11 @@ Clarinet.test({
         const toOwnerAmount = PRICE - amountCommission
 
 
-        // Given that seller has token with ID.
-        const tx = MockTradableTraitContract.register({address: seller.address, id: ID})
+        // Given that seller has token with TOKEN_ID.
+        const tx = MockTradableContract.mint({address: seller.address, id: TOKEN_ID})
         const listingTx = BoomMarketPlace.listAsset({
             address: seller.address,
-            id: ID,
+            id: TOKEN_ID,
             price: PRICE,
             commission: COMMISSION
         });
@@ -307,7 +346,7 @@ Clarinet.test({
 
         // Finally, purchase Asset
         const block = chain.mineBlock([
-            BoomMarketPlace.purchaseAsset({address: buyer.address, id: ID}),
+            BoomMarketPlace.purchaseAsset({address: buyer.address, id: TOKEN_ID}),
         ])
 
         block.receipts[0].result.expectOk().expectBool(true);

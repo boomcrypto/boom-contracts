@@ -10,7 +10,7 @@ const call = (fun: ContractFun, args: Array<string>, sender: string): Tx => {
 }
 
 
-type ListingOptions = {
+export type ListingOptions = {
     address: string;
     id: number;
 };
@@ -31,6 +31,18 @@ type ListingFrozenOptions = {
 
 
 const BoomMarketPlace = class {
+    static ErrorCodes = {
+        paymentFailed: 1 as const,
+        transferFailed: 2 as const,
+        notAllowed: 3 as const,
+        duplicateEntry: 4 as const,
+        tradableNotFound: 5 as const,
+        commissionOrPriceTooLow: 6 as const,
+        listingsFrozen: 7 as const,
+        commissionPaymentFailed: 8 as const,
+        royaltyPaymentFailed: 9 as const,
+    }
+    
     static listAsset = ({address, id, price = 1_000_000, commission = 1_000, sender}: ListAssetOptions): Tx =>
         call('list-asset', [
                 types.principal(MOCK_TRADABLE_TRAIT),
