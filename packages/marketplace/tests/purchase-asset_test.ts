@@ -212,7 +212,6 @@ Clarinet.test({
         block.receipts[0].result
             .expectErr()
             .expectUint(BoomMarketPlace.ErrorCodes.transferFailed);
-
     }
 })
 

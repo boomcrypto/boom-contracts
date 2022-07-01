@@ -108,7 +108,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "List asset, duplicate entry",
+    name: "List asset, duplicate entry:: (this not going to be hit, in the current structure)",
     ignore: true,
     fn: (chain, accounts) => {
         const deployer = accounts.get("deployer")!;
