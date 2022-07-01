@@ -3,7 +3,7 @@ import {ListingOptions} from "./boom-marketplace.ts";
 
 const CONTRACT_NAME = 'mock-tradable-trait'
 
-type ContractFun = 'mint' | 'get-owner'
+type ContractFun = 'mint' | 'get-owner' | 'set-failing';
 
 const call = (funName: ContractFun, args: Array<string>, sender: string): Tx => {
     return Tx.contractCall(CONTRACT_NAME, funName, args, sender)
@@ -17,6 +17,10 @@ const MockTradableContract = class {
 
     static getOwner = ({address, id}: ListingOptions): Tx => {
         return call('get-owner', [types.uint(id)], address);
+    }
+
+    static setFailing = ({fail, sender}: { fail: boolean; sender: string }): Tx => {
+        return call("set-failing", [types.bool(fail)], sender);
     }
 }
 

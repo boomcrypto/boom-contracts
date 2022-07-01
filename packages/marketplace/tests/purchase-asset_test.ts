@@ -1,6 +1,7 @@
 import {Clarinet} from "https://deno.land/x/clarinet@v0.31.1/index.ts";
 import BoomMarketPlace from "./utils/boom-marketplace.ts";
 import {assertEquals} from "https://deno.land/std@0.124.0/testing/asserts.ts";
+import MockTradableContract from "./utils/mock-tradable-contract.ts";
 
 Clarinet.test({
     name: 'Purchase Asset, Success',
@@ -121,7 +122,7 @@ Clarinet.test({
         const COMMISSION = 250;
 
         // Mint TOKEN_ID to wallet_1.
-        let b = chain.mineBlock(
+        chain.mineBlock(
             BoomMarketPlace.mintAndListNewAsset({
                 address: seller.address,
                 id: TOKEN_ID,
@@ -178,4 +179,41 @@ Clarinet.test({
             .expectUint(BoomMarketPlace.ErrorCodes.royaltyPaymentFailed)
     }
 })
+
+
+Clarinet.test({
+    name: 'Purchase Asset, transfer should fail',
+    fn: (chain, accounts) => {
+        const deployer = accounts.get('deployer')!;
+        const seller = accounts.get('wallet_1')!;
+        const buyer = accounts.get('wallet_2')!;
+        const TOKEN_ID = 33;
+
+        // Given that seller has a token with TOKEN_ID.
+        chain.mineBlock([
+            ...BoomMarketPlace.mintAndListNewAsset({
+                address: seller.address,
+                id: TOKEN_ID,
+                price: 1_000_000,
+                commission: 2_000,
+                sender: seller.address
+            }),
+            MockTradableContract.setFailing({
+                fail: true,
+                sender: deployer.address
+            }),
+        ]);
+
+        // Finally, purchase Asset
+        const block = chain.mineBlock([
+            BoomMarketPlace.purchaseAsset({address: buyer.address, id: TOKEN_ID}),
+        ])
+
+        block.receipts[0].result
+            .expectErr()
+            .expectUint(BoomMarketPlace.ErrorCodes.transferFailed);
+
+    }
+})
+
 
