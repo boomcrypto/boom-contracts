@@ -10,7 +10,8 @@ type ContractFun =
     | 'set-listings-frozen'
     | 'unlist-asset'
     | 'purchase-asset'
-    | 'set-royalty';
+    | 'set-royalty'
+    | 'admin-unlist-asset';
 
 const call = (fun: ContractFun, args: Array<string>, sender: string): Tx => {
     return Tx.contractCall(CONTRACT_NAME, fun, args, sender)
@@ -107,6 +108,14 @@ const BoomMarketPlace = class {
             ],
             address
         )
+
+    static adminUnlistAsset = ({sender, id}: { sender: string, id: number }) => {
+        return call('admin-unlist-asset',
+            [
+                types.principal(MOCK_TRADABLE_TRAIT),
+                types.uint(id)
+            ], sender)
+    }
 
     static mintAndListNewAsset = (
         {
