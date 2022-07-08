@@ -3,12 +3,16 @@ name = "airdrop-moon"
 authors = []
 description = ""
 telemetry = true
-requirements = []
 boot_contracts = ["pox", "costs-v2", "bns"]
 
-[contracts.nft-trait]
-path = "../common/contracts/nft-trait.clar"
+
+[[project.requirements]]
+contract_id = "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait"
+
+[contracts.moons-airdrop-mint]
+path = "contracts/moons-airdrop-mint.clar"
 depends_on = []
+
 
 [contracts.moons-airdrop]
 path = "contracts/moons-airdrop.clar"
