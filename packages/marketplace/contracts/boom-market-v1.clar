@@ -10,7 +10,7 @@
 
 (define-map on-sale
   {tradables: principal, tradable-id: uint}
-  {price: uint, commission: uint, owner: principal, royalty-address: principal, royalty-percent: uint}
+  {price: uint, commission: uint, owner: principal}
 )
 
 (define-map royalties
@@ -89,7 +89,7 @@
    (if (and (>= commission (var-get minimum-commission)) (>= price (var-get minimum-listing-price)))
     (if (is-eq tradable-owner tx-sender)
      (if (map-insert on-sale {tradables: (contract-of tradables), tradable-id: tradable-id}
-          {price: price, commission: commission, owner: tradable-owner, royalty-address: (get royalty-address royalty), royalty-percent: (get royalty-percent royalty)})
+          {price: price, commission: commission, owner: tradable-owner})
       (begin
        (match (transfer-tradable-to-escrow tradables tradable-id)
         success (begin
@@ -127,17 +127,19 @@
 (define-public (purchase-asset (tradables <tradables-trait>) (tradable-id uint))
   (match (map-get? on-sale {tradables: (contract-of tradables), tradable-id: tradable-id})
     nft-data
-    (let ((price (get price nft-data))
+    (let ((royal (map-get? royalties {tradables: (contract-of tradables)}))
+          (price (get price nft-data))
           (commission-amount (/ (* price (get commission nft-data)) u10000))
-          (royalty-amount (/ (* price (get royalty-percent nft-data)) u10000))
+          (royalty-amount (/ (* price (default-to u0 (get royalty-percent royal))) u10000))
+          (royalty-address (get royalty-address royal))
           (to-owner-amount (- (- price commission-amount) royalty-amount)))
       ;; first send the amount to the owner
       (match (stx-transfer? to-owner-amount tx-sender (get owner nft-data))
         owner-success ;; sending money to owner succeeded
         (match (stx-transfer? commission-amount tx-sender contract-owner)
           commission-success ;; sending commission to contract owner succeeded
-            (if (> royalty-amount u0)
-              (match (stx-transfer? royalty-amount tx-sender (get royalty-address nft-data))
+            (if (and (> royalty-amount u0) (is-some royalty-address))
+              (match (stx-transfer? royalty-amount tx-sender (unwrap-panic royalty-address))
                 royalty-success ;; sending royalty to artist succeeded
                 (match (transfer-tradable-from-escrow tradables tradable-id)
                   transfer-success (begin
@@ -187,10 +189,11 @@
   )
 )
 
-(define-public (set-royalty (contract principal) (address principal) (percent uint))
+;; TODO: if you don't need trait just use principal.
+(define-public (set-royalty (contract <tradables-trait>) (address principal) (percent uint))
   (begin
     (asserts! (is-eq tx-sender contract-owner) (err err-not-allowed))
-    (ok (map-set royalties {tradables: contract} {royalty-address: address, royalty-percent: percent}))
+    (ok (map-set royalties {tradables: (contract-of contract)} {royalty-address: address, royalty-percent: percent}))
   )
 )
 
