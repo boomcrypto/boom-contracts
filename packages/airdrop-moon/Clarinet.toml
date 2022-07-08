@@ -26,7 +26,7 @@ depends_on = []
 
 [contracts.moons-airdrop]
 path = "contracts/moons-airdrop.clar"
-depends_on = []
+depends_on = ["nft-trait"]
 
 [repl]
 costs_version = 2
