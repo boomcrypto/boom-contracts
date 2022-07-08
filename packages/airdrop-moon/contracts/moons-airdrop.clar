@@ -6,9 +6,6 @@
 
 ;; Constants
 (define-constant DEPLOYER tx-sender)
-(define-constant COMM u400)
-;; we need just one. 
-(define-constant COMM-ADDRESS 'SPNWZ5V2TPWGQGVDR6T7B6RQ4XMGZ4PXTEE0VQ0S)
 
 (define-constant ERR-NO-MORE-NFTS u100)
 (define-constant ERR-NOT-AUTHORIZED u104)

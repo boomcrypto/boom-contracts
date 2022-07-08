@@ -19,6 +19,10 @@ depends_on = []
 path = "contracts/test-setup/commission-free.clar"
 depends_on = []
 
+[contracts.moons-airdrop-commission]
+path = "contracts/moons-airdrop-commission.clar"
+depends_on = []
+
 [contracts.moons-airdrop-mint]
 path = "contracts/moons-airdrop-mint.clar"
 depends_on = []
@@ -26,7 +30,7 @@ depends_on = []
 
 [contracts.moons-airdrop]
 path = "contracts/moons-airdrop.clar"
-depends_on = ["nft-trait"]
+depends_on = []
 
 [repl]
 costs_version = 2
