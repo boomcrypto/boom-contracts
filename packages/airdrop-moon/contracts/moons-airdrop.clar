@@ -1,5 +1,6 @@
 ;; Moons
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
+(use-trait commission-trait 'SP2KAF9RF86PVX3NEE27DFV1CQX0T4WGR41X3S45C.commission-trait.commission)
 
 (define-non-fungible-token Moons uint)
 
@@ -94,9 +95,6 @@
 )
 
 ;; Non-custodial marketplace extras
-(define-trait commission-trait
-  ((pay (uint uint) (response bool uint))))
-
 (define-map token-count principal uint)
 (define-map market uint {price: uint, commission: principal})
 

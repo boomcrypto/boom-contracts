@@ -1,64 +1,13 @@
+import { Clarinet, Tx, Chain, Account, types, assertEquals } from "./deps.ts";
+
 import {
-  Clarinet,
-  Tx,
-  Chain,
-  Account,
-  types,
-} from "https://deno.land/x/clarinet@v0.29.0/index.ts";
-import { assertEquals } from "https://deno.land/std@0.109.0/testing/asserts.ts";
+  mint,
+  transfer,
+  burn,
+  getLastTokenId,
+} from "./clients/moons-airdrop-client.ts";
 
-function mint(account: Account, id: number) {
-  return Tx.contractCall(
-    "moons-airdrop",
-    "mint",
-    [types.principal(account.address), types.uint(id)],
-    account.address
-  );
-}
-
-function transfer(
-  nft: number,
-  sender: Account,
-  receiver: Account,
-  account?: Account
-) {
-  return Tx.contractCall(
-    "moons-airdrop",
-    "transfer",
-    [
-      types.uint(nft),
-      types.principal(sender.address),
-      types.principal(receiver.address),
-    ],
-    account ? account.address : sender.address
-  );
-}
-
-function burn(nft: number, account: Account) {
-  return Tx.contractCall(
-    "moons-airdrop",
-    "burn",
-    [types.uint(nft)],
-    account.address
-  );
-}
-
-export function getLastTokenId(chain: Chain, userAddress: string) {
-  return chain.callReadOnlyFn(
-    "moons-airdrop",
-    "get-last-token-id",
-    [],
-    userAddress
-  ).result;
-}
-
-function airdrop(account: Account) {
-  return Tx.contractCall("moons-airdrop-mint", "airdrop", [], account.address);
-}
-
-function airdropTestAccounts(account: Account) {
-  return Tx.contractCall("test-mint", "airdrop", [], account.address);
-}
+import { airdrop, airdropTestAccounts } from "./clients/mint-client.ts";
 
 Clarinet.test({
   name: "Ensure that all nfts have been minted",
@@ -106,7 +55,6 @@ Clarinet.test({
     block.receipts[1].result.expectOk().expectBool(true);
   },
 });
-
 
 Clarinet.test({
   name: "Ensure that a user can burn own NFT",
