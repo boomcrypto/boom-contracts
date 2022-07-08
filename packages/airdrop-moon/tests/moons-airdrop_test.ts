@@ -107,6 +107,21 @@ Clarinet.test({
   },
 });
 
+
+Clarinet.test({
+  name: "Ensure that a user can burn own NFT",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const deployer = accounts.get("deployer")!;
+    const wallet_1 = accounts.get("wallet_1")!;
+    let block = chain.mineBlock([
+      airdropTestAccounts(deployer),
+      burn(1, wallet_1),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[1].result.expectOk().expectBool(true);
+  },
+});
+
 Clarinet.test({
   name: "Ensure that a user can't transfer NFT for others",
   async fn(chain: Chain, accounts: Map<string, Account>) {
