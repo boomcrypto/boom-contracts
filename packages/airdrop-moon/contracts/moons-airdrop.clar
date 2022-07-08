@@ -37,6 +37,8 @@
     (asserts! (is-eq contract-caller (var-get mint-contract)) (err ERR-NOT-AUTHORIZED))
     (asserts! (<= last-nft-id (var-get mint-limit)) (err ERR-NO-MORE-NFTS))
     (try! (nft-mint? Moons id principal))
+    (map-set token-count principal
+      (+ (default-to u0 (map-get? token-count principal)) u1))
     (var-set last-id (+ (var-get last-id) u1))
     (ok last-nft-id)
     )    

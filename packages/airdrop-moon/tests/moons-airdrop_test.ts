@@ -52,10 +52,22 @@ export function getLastTokenId(chain: Chain, userAddress: string) {
   ).result;
 }
 
+function airdrop(account: Account) {
+  return Tx.contractCall("moons-airdrop-mint", "airdrop", [], account.address);
+}
+
+function airdropTestAccounts(account: Account) {
+  return Tx.contractCall("test-mint", "airdrop", [], account.address);
+}
+
 Clarinet.test({
   name: "Ensure that all nfts have been minted",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     let deployer = accounts.get("deployer")!;
+
+    let block = chain.mineBlock([airdrop(deployer)]);
+    block.receipts[0].result.expectOk().expectBool(true);
+
     getLastTokenId(chain, deployer.address).expectOk().expectUint(644);
   },
 });
@@ -66,26 +78,32 @@ Clarinet.test({
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
     let block = chain.mineBlock([
+      airdrop(deployer),
       mint(wallet_1, 1),
       mint(wallet_1, 643),
       mint(wallet_1, 644),
       mint(wallet_1, 645),
     ]);
     assertEquals(block.height, 2);
-    block.receipts[0].result.expectErr().expectUint(104);
+    block.receipts[0].result.expectOk().expectBool(true);
     block.receipts[1].result.expectErr().expectUint(104);
     block.receipts[2].result.expectErr().expectUint(104);
     block.receipts[3].result.expectErr().expectUint(104);
+    block.receipts[4].result.expectErr().expectUint(104);
   },
 });
 
 Clarinet.test({
-  name: "Ensure that a user can't transfer other NFT",
+  name: "Ensure that a user can transfer own NFT",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const deployer = accounts.get("deployer")!;
     const wallet_1 = accounts.get("wallet_1")!;
-    let block = chain.mineBlock([transfer(1, wallet_1, deployer)]);
-    block.receipts[0].result.expectErr().expectUint(1);
+    let block = chain.mineBlock([
+      airdropTestAccounts(deployer),
+      transfer(1, wallet_1, deployer),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[1].result.expectOk().expectBool(true);
   },
 });
 
@@ -95,9 +113,12 @@ Clarinet.test({
     const deployer = accounts.get("deployer")!;
     const wallet_1 = accounts.get("wallet_1")!;
     const wallet_2 = accounts.get("wallet_2")!;
-    let block = chain.mineBlock([transfer(1, wallet_1, wallet_2, wallet_2)]);
-
-    block.receipts[0].result.expectErr().expectUint(104);
+    let block = chain.mineBlock([
+      airdropTestAccounts(deployer),
+      transfer(1, wallet_1, wallet_2, wallet_2),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[1].result.expectErr().expectUint(104);
   },
 });
 
@@ -106,8 +127,12 @@ Clarinet.test({
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const deployer = accounts.get("deployer")!;
     const wallet_2 = accounts.get("wallet_2")!;
-    let block = chain.mineBlock([burn(1, wallet_2)]);
-    block.receipts[0].result.expectErr().expectUint(104);
+    let block = chain.mineBlock([
+      airdropTestAccounts(deployer),
+      burn(1, wallet_2),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[1].result.expectErr().expectUint(104);
   },
 });
 
@@ -118,12 +143,14 @@ Clarinet.test({
     const wallet_1 = accounts.get("wallet_1")!;
     const wallet_2 = accounts.get("wallet_2")!;
     let block = chain.mineBlock([
+      airdrop(deployer),
       transfer(644, wallet_1, wallet_2), // nft does not exist
       transfer(643, wallet_1, wallet_2), // nft not owned by wallet 1
       burn(644, wallet_1),
     ]);
-    block.receipts[0].result.expectErr().expectUint(3);
-    block.receipts[1].result.expectErr().expectUint(1);
-    block.receipts[2].result.expectErr().expectUint(104);    
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[1].result.expectErr().expectUint(3);
+    block.receipts[2].result.expectErr().expectUint(1);
+    block.receipts[3].result.expectErr().expectUint(104);
   },
 });
