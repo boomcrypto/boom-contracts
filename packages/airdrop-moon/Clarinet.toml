@@ -3,16 +3,34 @@ name = "airdrop-moon"
 authors = []
 description = ""
 telemetry = true
-requirements = []
 boot_contracts = ["pox", "costs-v2", "bns"]
 
-[contracts.nft-trait]
-path = "../common/contracts/nft-trait.clar"
+
+[[project.requirements]]
+contract_id = "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait"
+[[project.requirements]]
+contract_id = "SP2KAF9RF86PVX3NEE27DFV1CQX0T4WGR41X3S45C.commission-trait"
+
+[contracts.test-mint]
+path = "contracts/test-setup/test-mint.clar"
 depends_on = []
+
+[contracts.commission-free]
+path = "contracts/test-setup/commission-free.clar"
+depends_on = []
+
+[contracts.moons-airdrop-commission]
+path = "contracts/moons-airdrop-commission.clar"
+depends_on = []
+
+[contracts.moons-airdrop-mint]
+path = "contracts/moons-airdrop-mint.clar"
+depends_on = []
+
 
 [contracts.moons-airdrop]
 path = "contracts/moons-airdrop.clar"
-depends_on = ["nft-trait"]
+depends_on = []
 
 [repl]
 costs_version = 2
