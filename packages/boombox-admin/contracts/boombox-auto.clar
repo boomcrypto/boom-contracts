@@ -20,3 +20,6 @@
     (asserts! (unwrap-panic (check-job)) (ok false))
     (map-insert commits next-cycle block-height)
     (contract-call? .boombox-admin stack-aggregation-commit pox-addr next-cycle)))
+
+(define-read-only (get-commit (reward-cycle uint))
+    (map-get? commits reward-cycle))
