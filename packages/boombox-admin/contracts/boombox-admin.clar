@@ -25,6 +25,8 @@
 
 (define-map boombox-by-contract {fq-contract: principal, cycle: uint} uint)
 
+(define-data-var boombox-list (list 100 uint) (list))
+
 ;; @desc adds a boombox contract to the list of boomboxes
 ;; @param nft-contract; The NFT contract for this boombox
 ;; @param cycle; PoX reward cycle
@@ -40,6 +42,7 @@
       minimum-amount: minimum-amount, pox-addr: pox-addr, owner: owner,
       active: true })
     (asserts! (map-insert boombox-by-contract {fq-contract: fq-contract, cycle: cycle} id) err-entry-exists)
+    (append-to-boombox-list id)
     (try! (contract-call? nft-contract set-boombox-id id))
     (var-set last-id id)
     (ok id)))
@@ -59,6 +62,9 @@
 
 (define-read-only (get-boombox-by-contract (fq-contract <bb-trait>) (cycle uint))
   (map-get? boombox-by-contract {fq-contract: (contract-of fq-contract), cycle: cycle}))
+
+(define-read-only (get-boombox-list)
+  (map get-boombox-by-id (var-get boombox-list)))
 
 ;; (define-private (get-boombox-by-owner (owner principal)) body)
 ;; (define-private (get-boombox-by-owner-and-cycle (owner principal) (cycle uint)) body)
@@ -164,6 +170,23 @@
 (define-read-only (current-cycle)
     (burn-height-to-reward-cycle burn-block-height))
 
+
+(define-data-var ctx-last uint u0)
+
+(define-private (not-last (e uint))
+  (not (is-eq e (var-get ctx-last))))
+
+(define-private (append-to-boombox-list (id uint))
+  (let ((bl (var-get boombox-list)))
+    (as-max-len? (append 
+      (if (>= (len bl) u100)
+        (begin
+          (var-set ctx-last (unwrap-panic (element-at bl u0)))
+          (filter not-last bl)
+        )
+        bl
+      )
+     id) u100)))
 
 
 ;; error handling
