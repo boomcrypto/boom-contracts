@@ -37,7 +37,7 @@
   (let ((fq-contract (contract-of nft-contract))
         (id (+ u1 (var-get last-id))))
     (asserts! (> cycle (current-cycle)) err-too-late)
-    (map-insert boombox id
+    (insert-boombox-by-id id
       {fq-contract: fq-contract, cycle: cycle, locking-period: locking-period,
       minimum-amount: minimum-amount, pox-addr: pox-addr, owner: owner,
       active: true })
@@ -50,9 +50,9 @@
 ;; @desc stops minting of a boombox
 ;; @param id; the boombox id
 (define-public (halt-boombox (id uint))
-  (let ((details (unwrap! (map-get? boombox id) err-not-found)))
+  (let ((details (unwrap! (get-boombox-by-id id) err-not-found)))
     (asserts! (is-eq contract-caller (get owner details)) err-not-authorized)
-    (map-set boombox id (merge details {active: false}))
+    (set-boombox-by-id id (merge details {active: false}))
     (ok true)))
 
 ;; @desc lookup a boombox by id
@@ -60,10 +60,32 @@
 (define-read-only (get-boombox-by-id (id uint))
   (map-get? boombox id))
 
+(define-private (set-boombox-by-id (id uint)
+                  (details
+                    {fq-contract: principal,
+                     cycle: uint,
+                     locking-period: uint,
+                     minimum-amount: uint,
+                     pox-addr: {version: (buff 1), hashbytes: (buff 20)},
+                     owner: principal,
+                     active: bool}))
+  (map-set boombox id details))
+
+(define-private (insert-boombox-by-id (id uint)
+                  (details
+                    {fq-contract: principal,
+                     cycle: uint,
+                     locking-period: uint,
+                     minimum-amount: uint,
+                     pox-addr: {version: (buff 1), hashbytes: (buff 20)},
+                     owner: principal,
+                     active: bool}))
+  (map-insert boombox id details))
+
 (define-read-only (get-boombox-by-contract (fq-contract <bb-trait>) (cycle uint))
   (map-get? boombox-by-contract {fq-contract: (contract-of fq-contract), cycle: cycle}))
 
-(define-read-only (get-boombox-list)
+(define-read-only (get-all-boomboxes)
   (map get-boombox-by-id (var-get boombox-list)))
 
 ;; (define-private (get-boombox-by-owner (owner principal)) body)
@@ -102,7 +124,7 @@
 ;; @fq-contract: fully qualified contract of that boombox
 ;; @amount-ustx: amount to lock, tx-sender must have at least this amount
 (define-public (delegate-stx (id uint) (fq-contract <bb-trait>) (amount-ustx uint))
-  (let ((details (unwrap! (map-get? boombox id) err-not-found))
+  (let ((details (unwrap! (get-boombox-by-id id) err-not-found))
       (pox-addr (get pox-addr details))
       (locking-period (get locking-period details)))
     (asserts! (get active details) err-not-authorized)
@@ -170,23 +192,9 @@
 (define-read-only (current-cycle)
     (burn-height-to-reward-cycle burn-block-height))
 
-
-(define-data-var ctx-last uint u0)
-
-(define-private (not-last (e uint))
-  (not (is-eq e (var-get ctx-last))))
-
 (define-private (append-to-boombox-list (id uint))
-  (let ((bl (var-get boombox-list)))
-    (as-max-len? (append 
-      (if (>= (len bl) u100)
-        (begin
-          (var-set ctx-last (unwrap-panic (element-at bl u0)))
-          (filter not-last bl)
-        )
-        bl
-      )
-     id) u100)))
+  (var-set boombox-list
+    (unwrap-panic (as-max-len? (append (var-get boombox-list) id) u100))))
 
 
 ;; error handling
