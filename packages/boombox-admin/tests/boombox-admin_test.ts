@@ -8,6 +8,8 @@ import {
 } from "../../common/tests/deps.ts";
 import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin.ts";
 
+const MAX_NUMBER_OF_BOOMBOXES = 100;
+
 function addBoombox(
   boombox: string,
   cycle: number,
@@ -189,8 +191,8 @@ Clarinet.test({
     allBoomboxes[0].expectSome().expectTuple()["cycle"].expectUint(1);
     allBoomboxes[1].expectSome().expectTuple()["cycle"].expectUint(2);
 
-    // add 98 boomboxes
-    const indices = [...Array(98).keys()];
+    // add MAX_NUMBER_OF_BOOMBOXES - 2 boomboxes
+    const indices = [...Array(MAX_NUMBER_OF_BOOMBOXES -2).keys()];
     block = chain.mineBlock(
       indices.map((i) => addBoombox(boombox, i + 3, 1, 40, wallet_1, wallet_1))
     );
@@ -201,13 +203,17 @@ Clarinet.test({
       deployer.address
     );
     allBoomboxes = allBoomboxesResponse.result.expectList();
-    assertEquals(allBoomboxes.length, 100);
+    assertEquals(allBoomboxes.length, MAX_NUMBER_OF_BOOMBOXES);
+    // first two boomboxes
     allBoomboxes[0].expectSome().expectTuple()["cycle"].expectUint(1);
-    allBoomboxes[99].expectSome().expectTuple()["cycle"].expectUint(100);
+    allBoomboxes[1].expectSome().expectTuple()["cycle"].expectUint(2);
+    // newly added boomboxes
+    allBoomboxes[2].expectSome().expectTuple()["cycle"].expectUint(3);
+    allBoomboxes[MAX_NUMBER_OF_BOOMBOXES - 1].expectSome().expectTuple()["cycle"].expectUint(MAX_NUMBER_OF_BOOMBOXES);
 
-    // The 101th call to add-boombox fails
+    // The (MAX_NUMBER_OF_BOOMBOXES+1)-th call to add-boombox fails
     block = chain.mineBlock([
-      addBoombox(boombox, 101, 1, 40, wallet_1, wallet_1),
+      addBoombox(boombox, MAX_NUMBER_OF_BOOMBOXES + 1, 1, 40, wallet_1, wallet_1),
     ]);
     assertEquals(block.receipts.length, 0);
   },
