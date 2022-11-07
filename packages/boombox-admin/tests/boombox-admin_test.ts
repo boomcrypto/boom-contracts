@@ -4,7 +4,7 @@ import {
   Chain,
   Account,
   types,
-  assertEquals
+  assertEquals,
 } from "../../common/tests/deps.ts";
 import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin.ts";
 
@@ -156,5 +156,59 @@ Clarinet.test({
     block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
     assertEquals(block.height, 103);
     block.receipts[0].result.expectErr().expectUint(607); // to early
+  },
+});
+
+Clarinet.test({
+  name: "Ensure that user can get list of boomboxes up to the maximum length",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    let deployer = accounts.get("deployer")!;
+    let wallet_1 = accounts.get("wallet_1")!;
+    const boombox = `${deployer.address}.boombox-simple`;
+    chain.mineEmptyBlock(100);
+    let block = chain.mineBlock([
+      poxAllowBoomboxAdminAsContractCaller(
+        deployer.address + ".boombox-admin",
+        wallet_1
+      ),
+      addBoombox(boombox, 1, 1, 40, wallet_1, wallet_1),
+      addBoombox(boombox, 2, 1, 40, wallet_1, wallet_1),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[1].result.expectOk().expectUint(1);
+    block.receipts[2].result.expectOk().expectUint(2);
+
+    let allBoomboxesResponse = chain.callReadOnlyFn(
+      "boombox-admin",
+      "get-all-boomboxes",
+      [],
+      deployer.address
+    );
+    let allBoomboxes = allBoomboxesResponse.result.expectList();
+    assertEquals(allBoomboxes.length, 2);
+    allBoomboxes[0].expectSome().expectTuple()["cycle"].expectUint(1);
+    allBoomboxes[1].expectSome().expectTuple()["cycle"].expectUint(2);
+
+    // add 98 boomboxes
+    const indices = [...Array(98).keys()];
+    block = chain.mineBlock(
+      indices.map((i) => addBoombox(boombox, i + 3, 1, 40, wallet_1, wallet_1))
+    );
+    allBoomboxesResponse = chain.callReadOnlyFn(
+      "boombox-admin",
+      "get-all-boomboxes",
+      [],
+      deployer.address
+    );
+    allBoomboxes = allBoomboxesResponse.result.expectList();
+    assertEquals(allBoomboxes.length, 100);
+    allBoomboxes[0].expectSome().expectTuple()["cycle"].expectUint(1);
+    allBoomboxes[99].expectSome().expectTuple()["cycle"].expectUint(100);
+
+    // The 101th call to add-boombox fails
+    block = chain.mineBlock([
+      addBoombox(boombox, 101, 1, 40, wallet_1, wallet_1),
+    ]);
+    assertEquals(block.receipts.length, 0);
   },
 });
