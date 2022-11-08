@@ -59,6 +59,14 @@ function stackAggregationCommit(cycle: number, account: Account) {
   );
 }
 
+function haltBoombox(id: number, account: Account) {
+  return Tx.contractCall(
+    "boombox-admin",
+    "halt-boombox",
+    [types.uint(id)],
+    account.address
+  );
+}
 /**
  * Pox Info testnet
  * prepare phase: 30 blocks
@@ -235,5 +243,40 @@ Clarinet.test({
       ),
     ]);
     assertEquals(block.receipts.length, 0);
+  },
+});
+
+Clarinet.test({
+  name: "Ensure that user can halt boombox",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    let deployer = accounts.get("deployer")!;
+    let wallet_1 = accounts.get("wallet_1")!;
+    const boombox = `${deployer.address}.boombox-simple`;
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT);
+    let block = chain.mineBlock([
+      poxAllowBoomboxAdminAsContractCaller(
+        deployer.address + ".boombox-admin",
+        wallet_1
+      ),
+      addBoombox(boombox, 1, 1, 40, wallet_1, wallet_1),
+      addBoombox(boombox, 2, 1, 40, wallet_1, wallet_1),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[1].result.expectOk().expectUint(1);
+    block.receipts[2].result.expectOk().expectUint(2);
+
+    block = chain.mineBlock([haltBoombox(2, deployer)]);
+    block.receipts[0].result.expectOk().expectBool(true);
+
+    let allBoomboxesResponse = chain.callReadOnlyFn(
+      "boombox-admin",
+      "get-all-boomboxes",
+      [],
+      deployer.address
+    );
+    let allBoomboxes = allBoomboxesResponse.result.expectList();
+    assertEquals(allBoomboxes.length, 2);
+    allBoomboxes[0].expectTuple()["active"].expectBool(true);
+    allBoomboxes[1].expectTuple()["active"].expectBool(false);
   },
 });
