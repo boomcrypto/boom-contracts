@@ -59,26 +59,12 @@
 ;; @desc stops minting of a boombox
 ;; @param id; the boombox id
 (define-public (halt-boombox (id uint))
-  (let ((details (unwrap! (get-boombox-by-id id) err-not-found)))
-    (asserts! (is-eq contract-caller (get owner details)) err-not-authorized)
-    (set-boombox-by-id id (merge details {active: false}))
-    (ok true)))
+  (err u999))
 
 ;; @desc lookup a boombox by id
 ;; @param id; the boombox id
 (define-read-only (get-boombox-by-id (id uint))
-  (map-get? boombox id))
-
-(define-private (set-boombox-by-id (id uint)
-                  (details
-                    {fq-contract: principal,
-                     cycle: uint,
-                     locking-period: uint,
-                     minimum-amount: uint,
-                     pox-addr: {version: (buff 1), hashbytes: (buff 20)},
-                     owner: principal,
-                     active: bool}))
-  (map-set boombox id details))
+  (element-at (var-get boombox-list) (- id u1)))
 
 (define-private (insert-boombox-by-id (id uint)
                   (details
