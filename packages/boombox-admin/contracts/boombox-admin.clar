@@ -25,7 +25,14 @@
 
 (define-map boombox-by-contract {fq-contract: principal, cycle: uint} uint)
 
-(define-data-var boombox-list (list 100 uint) (list))
+(define-data-var boombox-list (list 100 {id: uint,
+    fq-contract: principal,
+    cycle: uint,
+    locking-period: uint,
+    minimum-amount: uint,
+    pox-addr: {version: (buff 1), hashbytes: (buff 20)},
+    owner: principal,
+    active: bool}) (list))
 
 ;; @desc adds a boombox contract to the list of boomboxes
 ;; @param nft-contract; The NFT contract for this boombox
@@ -42,7 +49,9 @@
       minimum-amount: minimum-amount, pox-addr: pox-addr, owner: owner,
       active: true })
     (asserts! (map-insert boombox-by-contract {fq-contract: fq-contract, cycle: cycle} id) err-entry-exists)
-    (append-to-boombox-list id)
+    (append-to-boombox-list {id: id, fq-contract: fq-contract, cycle: cycle, locking-period: locking-period,
+      minimum-amount: minimum-amount, pox-addr: pox-addr, owner: owner,
+      active: true })
     (try! (contract-call? nft-contract set-boombox-id id))
     (var-set last-id id)
     (ok id)))
@@ -86,7 +95,7 @@
   (map-get? boombox-by-contract {fq-contract: (contract-of fq-contract), cycle: cycle}))
 
 (define-read-only (get-all-boomboxes)
-  (map get-boombox-by-id (var-get boombox-list)))
+  (var-get boombox-list))
 
 ;; (define-private (get-boombox-by-owner (owner principal)) body)
 ;; (define-private (get-boombox-by-owner-and-cycle (owner principal) (cycle uint)) body)
@@ -192,9 +201,15 @@
 (define-read-only (current-cycle)
     (burn-height-to-reward-cycle burn-block-height))
 
-(define-private (append-to-boombox-list (id uint))
+(define-private (append-to-boombox-list (details {id: uint, fq-contract: principal,
+    cycle: uint,
+    locking-period: uint,
+    minimum-amount: uint,
+    pox-addr: {version: (buff 1), hashbytes: (buff 20)},
+    owner: principal,
+    active: bool}))
   (var-set boombox-list
-    (unwrap-panic (as-max-len? (append (var-get boombox-list) id) u100))))
+    (unwrap-panic (as-max-len? (append (var-get boombox-list) details) u100))))
 
 
 ;; error handling

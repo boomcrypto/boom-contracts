@@ -188,8 +188,8 @@ Clarinet.test({
     );
     let allBoomboxes = allBoomboxesResponse.result.expectList();
     assertEquals(allBoomboxes.length, 2);
-    allBoomboxes[0].expectSome().expectTuple()["cycle"].expectUint(1);
-    allBoomboxes[1].expectSome().expectTuple()["cycle"].expectUint(2);
+    allBoomboxes[0].expectTuple()["cycle"].expectUint(1);
+    allBoomboxes[1].expectTuple()["cycle"].expectUint(2);
 
     // add MAX_NUMBER_OF_BOOMBOXES - 2 boomboxes
     const indices = [...Array(MAX_NUMBER_OF_BOOMBOXES -2).keys()];
@@ -205,11 +205,11 @@ Clarinet.test({
     allBoomboxes = allBoomboxesResponse.result.expectList();
     assertEquals(allBoomboxes.length, MAX_NUMBER_OF_BOOMBOXES);
     // first two boomboxes
-    allBoomboxes[0].expectSome().expectTuple()["cycle"].expectUint(1);
-    allBoomboxes[1].expectSome().expectTuple()["cycle"].expectUint(2);
+    allBoomboxes[0].expectTuple()["cycle"].expectUint(1);
+    allBoomboxes[1].expectTuple()["cycle"].expectUint(2);
     // newly added boomboxes
-    allBoomboxes[2].expectSome().expectTuple()["cycle"].expectUint(3);
-    allBoomboxes[MAX_NUMBER_OF_BOOMBOXES - 1].expectSome().expectTuple()["cycle"].expectUint(MAX_NUMBER_OF_BOOMBOXES);
+    allBoomboxes[2].expectTuple()["cycle"].expectUint(3);
+    allBoomboxes[MAX_NUMBER_OF_BOOMBOXES - 1].expectTuple()["cycle"].expectUint(MAX_NUMBER_OF_BOOMBOXES);
 
     // The (MAX_NUMBER_OF_BOOMBOXES+1)-th call to add-boombox fails
     block = chain.mineBlock([
