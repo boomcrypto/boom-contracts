@@ -1,4 +1,4 @@
-;; @contract Boom NFTs
+;; @contract boom-nfts
 ;; @version 3
 
 ;; testnet: ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait
@@ -9,11 +9,12 @@
 (use-trait commission-trait .commission-trait.commission)
 
 (define-non-fungible-token boom uint)
+
 (define-data-var last-id uint u0)
 (define-data-var last-series-id uint u0)
 
-(define-constant PARTS_PER_MILLION 1000000)
 (define-constant OWNER tx-sender)
+
 ;; scoped variable for boom-mint function
 (define-data-var ctx-mint {series-id: uint, creator: principal, categories: (optional (list 5 uint))} {series-id: u0, creator: tx-sender, categories: none})
 
@@ -39,7 +40,6 @@
     count: uint,
     default-categories: (optional (list 5 uint)),
     uri: (string-ascii 256),
-    hash: (optional (buff 64)),
     royalties: uint})
 
 (define-map approvals {owner: principal, operator: principal, id: uint} bool)
@@ -109,7 +109,6 @@
       {creator: creator,
       count: size,
       uri: uri,
-      hash: hash,
       default-categories: categories,
       royalties: royalties})
     (ok {series-id: series-id, ids: (map mint-boom ids)})))
