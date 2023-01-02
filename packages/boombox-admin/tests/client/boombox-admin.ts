@@ -1,4 +1,4 @@
-import { Tx, Account, types, Chain } from "../../../common/tests/deps";
+import { Tx, Account, types, Chain } from "../../../common/tests/deps.ts";
 
 
 
