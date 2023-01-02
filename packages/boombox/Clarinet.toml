@@ -5,7 +5,6 @@ authors = []
 telemetry = false
 cache_dir = '.cache'
 requirements = []
-
 [contracts.boombox]
 path = 'contracts/boombox-28.clar'
 clarity_version = 1
@@ -15,67 +14,61 @@ epoch = 2.0
 path = 'contracts/boombox-30.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
 
 [contracts.boombox-32]
 path = 'contracts/boombox-32.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
 
 [contracts.boombox-34]
 path = 'contracts/boombox-34.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
 
 [contracts.boombox-36]
 path = 'contracts/boombox-36.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
-[contracts.boombox-38]
 
+[contracts.boombox-38]
 path = 'contracts/boombox-38.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
-[contracts.boombox-40]
 
+[contracts.boombox-40]
 path = 'contracts/boombox-40.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
 
 [contracts.boombox-42]
 path = 'contracts/boombox-42.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
-[contracts.boombox-44]
 
+[contracts.boombox-44]
 path = 'contracts/boombox-44.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
 
 [contracts.boombox-46]
 path = 'contracts/boombox-46.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
 
 [contracts.boombox-48]
 path = 'contracts/boombox-48.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
-[contracts.boombox-50]
 
+[contracts.boombox-50]
 path = 'contracts/boombox-50.clar'
 clarity_version = 1
 epoch = 2.0
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
+
+[contracts.boombox-52]
+path = 'contracts/boombox-52.clar'
+clarity_version = 1
+epoch = 2.0
 
 [contracts.boombox-admin]
 path = '../boombox-admin/contracts/boombox-admin.clar'
