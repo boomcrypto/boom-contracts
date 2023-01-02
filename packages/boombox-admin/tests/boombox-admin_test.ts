@@ -5,8 +5,8 @@ import {
   Account,
   types,
   assertEquals
-} from "../../common/tests/deps";
-import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin";
+} from "../../common/tests/deps.ts";
+import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin.ts";
 
 export function addBoombox(
   boombox: string,

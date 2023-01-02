@@ -3,12 +3,12 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import {
   delegateStx,
   addBoombox,
-} from '../../boombox-admin/tests/boombox-admin_test'
-import { poxAllowBoomboxAdminAsContractCaller } from "../../boombox-admin/tests/client/boombox-admin";
+} from '../../boombox-admin/tests/boombox-admin_test.ts'
+import { poxAllowBoomboxAdminAsContractCaller } from "../../boombox-admin/tests/client/boombox-admin.ts";
 import {
   setBoomboxAdmin,
   transfer
-} from './client/boombox';
+} from './client/boombox.ts';
 
 Clarinet.test({
   name: "User can transfer nft",
