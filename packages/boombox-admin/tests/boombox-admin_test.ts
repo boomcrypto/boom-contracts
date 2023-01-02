@@ -5,10 +5,10 @@ import {
   Account,
   types,
   assertEquals
-} from "../../common/tests/deps.ts";
-import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin.ts";
+} from "../../common/tests/deps";
+import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin";
 
-function addBoombox(
+export function addBoombox(
   boombox: string,
   cycle: number,
   lockingPeriod: number,
@@ -31,7 +31,7 @@ function addBoombox(
   );
 }
 
-function delegateStx(
+export function delegateStx(
   boomboxId: number,
   boombox: string,
   amount: number,

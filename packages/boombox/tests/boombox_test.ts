@@ -4,20 +4,20 @@ import {
   Chain,
   Account,
   types,
-} from "../../common/tests/deps.ts";
+} from "../../common/tests/deps";
 
 import {
   delegateStx,
   addBoombox,
   poxAllowBoomboxAdminAsContractCaller
-} from "./../../boombox-admin/tests/client/boombox-admin.ts";
+} from "./../../boombox-admin/tests/client/boombox-admin";
 import {
   transfer,
   setApproved,
   setApprovedAll,
   getOwner,
   setBoomboxAdmin,
-} from "./client/boombox.ts";
+} from "./client/boombox";
 
 
 Clarinet.test({
