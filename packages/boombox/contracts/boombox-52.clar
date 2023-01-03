@@ -1,10 +1,10 @@
 ;; Boombox 50
-;; b-50
+;; b-52
 
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
 
-(define-non-fungible-token b-50 uint)
+(define-non-fungible-token b-52 uint)
 
 ;; Constants
 (define-constant DEPLOYER tx-sender)
@@ -41,7 +41,7 @@
 (define-public (burn (token-id uint))
   (begin 
     (asserts! (is-owner token-id tx-sender) (err ERR-NOT-AUTHORIZED))
-    (nft-burn? b-50 token-id tx-sender)))
+    (nft-burn? b-52 token-id tx-sender)))
 
 ;; adds the ability to set a custom event message
 (define-public (transfer-memo (id uint) (sender principal) (recipient principal) (memo (buff 34)))
@@ -61,7 +61,7 @@
   (let ((next-id (+ u1 (var-get last-id))))
     (asserts! (is-eq bb-id (unwrap! (map-get? boombox-id contract-caller) ERR-NOT-AUTHORIZED)) ERR-NOT-AUTHORIZED)
     (var-set last-id next-id)
-    (try! (nft-mint? b-50 next-id stacker))
+    (try! (nft-mint? b-52 next-id stacker))
     (ok next-id)))
 
 ;; SIP-009 functions
@@ -71,23 +71,24 @@
 
 (define-public (transfer (token-id uint) (sender principal) (recipient principal))
   (begin
+    (asserts! (is-none (map-get? market token-id)) ERR-LISTING)
     (asserts! (is-eq tx-sender sender) (err ERR-INVALID-USER))
-    (nft-transfer? b-50 token-id sender recipient)))
+    (nft-transfer? b-52 token-id sender recipient)))
 
 (define-read-only (get-owner (token-id uint))
-  (ok (nft-get-owner? b-50 token-id)))
+  (ok (nft-get-owner? b-52 token-id)))
 
 (define-read-only (get-token-uri (id uint))
   (ok (some "ipfs://bafkreideogan5eeypcnxwtlxi4llz74r77mdsbf6xkqdmupnhqpcpu5nrm")))
 
 ;; Private helper functions
 (define-private (is-owner (token-id uint) (user principal))
-    (is-eq user (unwrap! (nft-get-owner? b-50 token-id) false)))
+    (is-eq user (unwrap! (nft-get-owner? b-52 token-id) false)))
 
 ;; Read-only functions
 (define-read-only (get-owner-at-block (token-id uint) (stacks-tip uint))
   (match (get-block-info? id-header-hash stacks-tip)
-    block (ok (at-block block (nft-get-owner? b-50 token-id)))
+    block (ok (at-block block (nft-get-owner? b-52 token-id)))
     ERR-INVALID-STACKS-TIP))
 
 
@@ -101,7 +102,7 @@
     (map-get? token-count account)))
 
 (define-private (trnsfr (id uint) (sender principal) (recipient principal))
-  (match (nft-transfer? b-50 id sender recipient)
+  (match (nft-transfer? b-52 id sender recipient)
     success
       (let
         ((sender-balance (get-balance sender))
@@ -116,7 +117,7 @@
     error (err error)))
 
 (define-private (is-sender-owner (id uint))
-  (let ((owner (unwrap! (nft-get-owner? b-50 id) false)))
+  (let ((owner (unwrap! (nft-get-owner? b-52 id) false)))
     (or (is-eq tx-sender owner) (is-eq contract-caller owner))))
 
 (define-read-only (get-listing-in-ustx (id uint))
@@ -143,7 +144,7 @@
     (ok true)))
 
 (define-public (buy-in-ustx (id uint) (comm-trait <commission-trait>))
-  (let ((owner (unwrap! (nft-get-owner? b-50 id) (err ERR-NOT-FOUND)))
+  (let ((owner (unwrap! (nft-get-owner? b-52 id) (err ERR-NOT-FOUND)))
       (listing (unwrap! (map-get? market id) (err ERR-LISTING)))
       (price (get price listing)))
     (asserts! (is-eq (contract-of comm-trait) (get commission listing)) (err ERR-WRONG-COMMISSION))
