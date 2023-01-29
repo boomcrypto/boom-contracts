@@ -1,12 +1,12 @@
 ;; @contract boom-nfts
-;; @version 3
+;; @version 4
 
 ;; testnet: ST2PABAF9FTAJYNFZH93XENAJ8FVY99RRM4DF2YCW.nft-trait.nft-trait
 ;; testnet: ST000000000000000000002AMW42H.bns
 ;; testnet: ST1QK1AZ24R132C0D84EEQ8Y2JDHARDR58SMAYMMW.commission-trait
 
 (impl-trait .nft-trait.nft-trait)
-(use-trait commission-trait .commission-trait.commission)
+(use-trait commission-trait 'SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.commission-trait.commission)
 
 (define-non-fungible-token boom uint)
 
@@ -18,16 +18,11 @@
 ;; scoped variable for boom-mint function
 (define-data-var ctx-mint {series-id: uint, creator: principal, categories: (optional (list 5 uint))} {series-id: u0, creator: tx-sender, categories: none})
 
-
-(define-map nft-categories uint 
-  {id: uint, name: (string-utf8 256)})
-
 (define-map meta uint
   {series-id: uint,
   number: uint,
   listed: bool,
   price: (optional uint),
-  categories: (optional (list 5 uint)),
   fees: (optional principal)})
 
 (define-map index-by-series-item
@@ -41,40 +36,6 @@
     default-categories: (optional (list 5 uint)),
     uri: (string-ascii 256),
     royalties: uint})
-
-(define-map approvals {owner: principal, operator: principal, id: uint} bool)
-(define-map approvals-all {owner: principal, operator: principal} bool)
-
-;;
-;; operable functions
-;;
-(define-private (is-approved-with-owner (id uint) (operator principal) (owner principal))
-  (or
-    (is-eq owner operator)
-    (default-to (default-to
-      false
-        (map-get? approvals-all {owner: owner, operator: operator}))
-          (map-get? approvals {owner: owner, operator: operator, id: id}))))
-
-(define-read-only (is-approved (id uint) (operator principal))
-  (let ((owner (unwrap! (nft-get-owner? boom id) err-no-nft)))
-    (ok (is-approved-with-owner id operator owner))))
-
-(define-public (set-approved (id uint) (operator principal) (approved bool))
-	(ok (map-set approvals {owner: contract-caller, operator: operator, id: id} approved)))
-
-(define-public (set-approved-all (operator principal) (approved bool))
-	(ok (map-set approvals-all {owner: contract-caller, operator: operator} approved)))
-
-(define-private (inc-last-series-id)
-  (let ((series-id (+ u1 (var-get last-series-id))))
-      (var-set last-series-id series-id)
-      series-id))
-
-(define-public (add-category (id uint) (name (string-utf8 256)))
-  (begin
-    (asserts! (or (is-eq OWNER tx-sender) (is-eq OWNER contract-caller)) err-permission-denied)
-    (ok (map-set nft-categories id {id: id, name: name}))))
 
 (define-private (mint-boom (number uint))
   (let ((id (+ u1 (var-get last-id)))
@@ -109,20 +70,8 @@
       {creator: creator,
       count: size,
       uri: uri,
-      default-categories: categories,
       royalties: royalties})
     (ok {series-id: series-id, ids: (map mint-boom ids)})))
-
-;; change categories of some nft.
-;; The new categories override the old ones.
-(define-public (change-categories (id uint) (owner principal) (categories (optional (list 5 uint))))
-    (let 
-      ((nft (merge (unwrap! (map-get? meta id) err-no-nft) {categories: categories})))
-      (print nft)
-      (asserts! (is-approved-with-owner id contract-caller owner) err-permission-denied)
-      (map-set meta id nft)
-      (ok true)))
-
 
 (define-public (transfer (id uint) (sender principal) (recipient principal))
   (let ((owner (unwrap! (nft-get-owner? boom id) err-no-nft)))
