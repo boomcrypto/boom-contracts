@@ -25,7 +25,6 @@
 (define-data-var commission-address principal 'SP3QC4R6M7M0DAZBXSZCW4FWGDCNDD05FV8Y0AY8C)
 (define-data-var boombox-admin principal 'SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3)
 
-
 ;; Maps
 (define-map boombox-id principal uint);; boombox-admin contract : boombox id
 (define-map token-count principal uint)
@@ -36,10 +35,10 @@
 (define-public (set-commision-address (address principal))
   (begin
     (asserts! (or (is-eq tx-sender (var-get artist-address)) (is-eq tx-sender DEPLOYER)) (err ERR-INVALID-USER))
-    (ok (var-set commision-address address))))
+    (ok (var-set commission-address address))))
 
 (define-public (burn (token-id uint))
-  (begin 
+  (begin
     (asserts! (is-owner token-id tx-sender) (err ERR-NOT-AUTHORIZED))
     (nft-burn? b-52 token-id tx-sender)))
 
@@ -59,7 +58,7 @@
 ;; 'mint' can only be called by boombox admin for boomboxes
 (define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
   (let ((next-id (+ u1 (var-get last-id))))
-    (asserts! (is-eq bb-id (unwrap! (map-get? boombox-id contract-caller) ERR-NOT-AUTHORIZED)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq bb-id (unwrap! (map-get? boombox-id contract-caller) (err ERR-NOT-AUTHORIZED))) (err ERR-NOT-AUTHORIZED))
     (var-set last-id next-id)
     (try! (nft-mint? b-52 next-id stacker))
     (ok next-id)))
@@ -71,7 +70,7 @@
 
 (define-public (transfer (token-id uint) (sender principal) (recipient principal))
   (begin
-    (asserts! (is-none (map-get? market token-id)) ERR-LISTING)
+    (asserts! (is-none (map-get? market token-id)) (err ERR-LISTING))
     (asserts! (is-eq tx-sender sender) (err ERR-INVALID-USER))
     (nft-transfer? b-52 token-id sender recipient)))
 
@@ -127,9 +126,9 @@
   (let ((listing  {price: price, commission: (contract-of comm-trait)}))
     (asserts! (is-sender-owner id) (err ERR-NOT-AUTHORIZED))
     (map-set market id listing)
-    (print {  notification: "nft-listing", 
+    (print {  notification: "nft-listing",
               payload: (merge listing {
-                id: id, 
+                id: id,
                 action: "list-in-ustx" })})
     (ok true)))
 
@@ -137,9 +136,9 @@
   (begin
     (asserts! (is-sender-owner id) (err ERR-NOT-AUTHORIZED))
     (map-delete market id)
-    (print {  notification: "nft-listing", 
-              payload:{
-                id: id, 
+    (print {  notification: "nft-listing",
+              payload: {
+                id: id,
                 action: "unlist-in-ustx" }})
     (ok true)))
 
@@ -153,12 +152,12 @@
     (try! (contract-call? comm-trait pay id price))
     (try! (trnsfr id owner tx-sender))
     (map-delete market id)
-    (print {  notification: "nft-listing", 
-              payload:{
-                id: id, 
-                action: "buy-in-ustx" }})    
+    (print {  notification: "nft-listing",
+              payload: {
+                id: id,
+                action: "buy-in-ustx" }})
     (ok true)))
-    
+
 (define-data-var royalty-percent uint u250)
 
 (define-read-only (get-royalty-percent)
@@ -177,6 +176,6 @@
 ;; can only be called by boombox admin
 (define-public (set-boombox-id (bb-id uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get boombox-admin)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get boombox-admin)) (err ERR-NOT-AUTHORIZED))
     (map-set boombox-id contract-caller bb-id)
     (ok true)))
