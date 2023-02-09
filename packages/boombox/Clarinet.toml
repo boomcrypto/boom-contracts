@@ -1,28 +1,110 @@
 [project]
-name = "boombox-24"
-requirements = []
-costs_version = 2
+name = 'boombox-24'
+description = ''
+authors = []
+telemetry = false
+cache_dir = '.cache'
 
-[contracts.boombox-trait]
-path = "../boombox-admin/contracts/boombox-trait.clar"
-depends_on = []
+[[project.requirements]]
+contract_id = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait'
 
-[contracts.boombox-admin]
-path = "../boombox-admin/contracts/boombox-admin.clar"
-depends_on = ["boombox-trait", "commission-trait"]
-
-[contracts.boombox-simple]
-path = "../boombox-admin/contracts/boombox-simple.clar"
-depends_on = []
-
-[contracts.nft-trait]
-path = "../common/contracts/nft-trait.clar"
-depends_on = []
-
-[contracts.commission-trait]
-path = "../common/contracts/commission.clar"
-depends_on = []
+[[project.requirements]]
+contract_id = 'SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.commission-trait'
 
 [contracts.boombox]
-path = "contracts/boombox-28.clar"
-depends_on = ["nft-trait", "boombox-trait", "commission-trait"]
+path = 'contracts/boombox-28.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-30]
+path = 'contracts/boombox-30.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-32]
+path = 'contracts/boombox-32.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-34]
+path = 'contracts/boombox-34.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-36]
+path = 'contracts/boombox-36.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-38]
+path = 'contracts/boombox-38.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-40]
+path = 'contracts/boombox-40.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-42]
+path = 'contracts/boombox-42.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-44]
+path = 'contracts/boombox-44.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-46]
+path = 'contracts/boombox-46.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-48]
+path = 'contracts/boombox-48.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-50]
+path = 'contracts/boombox-50.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-52]
+path = 'contracts/boombox-52.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-admin]
+path = '../boombox-admin/contracts/boombox-admin.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-simple]
+path = '../boombox-admin/contracts/boombox-simple.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.boombox-trait]
+path = '../boombox-admin/contracts/boombox-trait.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.commission-trait]
+path = '../common/contracts/commission.clar'
+clarity_version = 1
+epoch = 2.0
+
+[contracts.nft-trait]
+path = '../common/contracts/nft-trait.clar'
+clarity_version = 1
+epoch = 2.0
+[repl.analysis]
+passes = []
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false

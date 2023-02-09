@@ -14,6 +14,7 @@ const PREPARE_LENGTH = 100;
 const BLOCKS_BEFORE_COMMIT = 200;
 
 function addBoombox(
+
   boombox: string,
   cycle: number,
   lockingPeriod: number,
@@ -36,7 +37,7 @@ function addBoombox(
   );
 }
 
-function delegateStx(
+export function delegateStx(
   boomboxId: number,
   boombox: string,
   amount: number,

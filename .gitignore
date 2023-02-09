@@ -6,3 +6,6 @@ history.txt
 
 # Dependency directories
 node_modules/
+
+#deno tests
+.cache
