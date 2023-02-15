@@ -8,12 +8,21 @@
 ;; constants
 ;;
 (define-constant deployer tx-sender)
+;; Stackerspool added constants
+(define-data-var royalty-percent uint u0)
+(define-map token-count principal uint)
+(define-map market uint {price: uint, commission: principal})
 
 ;; err constants
 (define-constant err-not-authorized (err u403))
 (define-constant err-not-found (err u404))
 (define-constant err-invalid-stacks-tip (err u608))
 (define-constant err-airdrop-called (err 701))
+
+;; Stackerspool added errors constants
+(define-constant error (err u1000))
+(define-constant err-listing (err u103))
+(define-constant err-wrong-commission (err u104))
 
 ;; data maps and vars
 ;;
@@ -40,15 +49,84 @@
 ;;
 
 ;; operable functions
-(define-read-only (is-approved (id uint) (operator principal))
-  (let ((owner (unwrap! (nft-get-owner? b-52 id) err-not-found)))
-    (ok (is-approved-with-owner id operator owner))))
+(use-trait commission-trait 'SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.commission-trait.commission)
 
-(define-public (set-approved (id uint) (operator principal) (approved bool))
-	(ok (map-set approvals {owner: contract-caller, operator: operator, id: id} approved)))
+(define-read-only (get-balance (account principal))
+  (default-to u0
+    (map-get? token-count account)))
 
-(define-public (set-approved-all (operator principal) (approved bool))
-	(ok (map-set approvals-all {owner: contract-caller, operator: operator} approved)))
+(define-private (trnsfr (id uint) (sender principal) (recipient principal))
+  (match (nft-transfer? b-52 id sender recipient)
+    success
+      (let
+        ((sender-balance (get-balance sender))
+        (recipient-balance (get-balance recipient)))
+          (map-set token-count
+            sender
+            (- sender-balance u1))
+          (map-set token-count
+            recipient
+            (+ recipient-balance u1))
+          (ok success))
+    error error))
+
+(define-private (is-sender-owner (id uint))
+  (let ((owner (unwrap! (nft-get-owner? b-52 id) false)))
+    (or (is-eq tx-sender owner) (is-eq contract-caller owner))))
+
+(define-read-only (get-listing-in-ustx (id uint))
+  (map-get? market id))
+
+(define-public (list-in-ustx (id uint) (price uint) (comm-trait <commission-trait>))
+  (let ((listing  {price: price, commission: (contract-of comm-trait)}))
+    (asserts! (is-sender-owner id) err-not-authorized)
+    (map-set market id listing)
+    (print {  notification: "nft-listing",
+              payload: (merge listing {
+                id: id,
+                action: "list-in-ustx" })})
+    (ok true)))
+
+(define-public (unlist-in-ustx (id uint))
+  (begin
+    (asserts! (is-sender-owner id) err-not-authorized)
+    (map-delete market id)
+    (print {  notification: "nft-listing",
+              payload: {
+                id: id,
+                action: "unlist-in-ustx" }})
+    (ok true)))
+
+(define-public (buy-in-ustx (id uint) (comm-trait <commission-trait>))
+  (let ((owner (unwrap! (nft-get-owner? b-52 id) err-not-found))
+      (listing (unwrap! (map-get? market id) err-listing))
+      (price (get price listing)))
+    (asserts! (is-eq (contract-of comm-trait) (get commission listing)) (err err-wrong-commission))
+    (try! (stx-transfer? price tx-sender owner))
+    (try! (pay-royalty price))
+    (try! (contract-call? comm-trait pay id price))
+    (try! (trnsfr id owner tx-sender))
+    (map-delete market id)
+    (print {  notification: "nft-listing",
+              payload: {
+                id: id,
+                action: "buy-in-ustx" }})
+    (ok true)))
+
+(define-data-var royalty-percent uint u250)
+
+(define-read-only (get-royalty-percent)
+  (ok (var-get royalty-percent)))
+
+(define-private (pay-royalty (price uint))
+  (let (
+    (royalty (/ (* price (var-get royalty-percent)) u10000))
+  )
+  (if (> (var-get royalty-percent) u0)
+    (try! (stx-transfer? royalty tx-sender (var-get artist-address)))
+    (print false)
+  )
+  (ok true)))
 
 ;; transfer functions
 (define-public (transfer (id uint) (sender principal) (recipient principal))
