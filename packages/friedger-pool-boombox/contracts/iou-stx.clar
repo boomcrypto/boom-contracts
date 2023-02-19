@@ -1,5 +1,3 @@
-
-;; prepaid-stx
 ;; iou stacks
 
 ;; constants
@@ -12,9 +10,6 @@
 (define-map approvals {owner: principal, operator: principal} uint)
 (define-map approvals-all {owner: principal, operator: principal} bool)
 
-
-;; private functions
-;;
 
 ;; public functions
 ;;
@@ -30,6 +25,16 @@
     (print memo)
     (ok true)))
 
+(define-public (mint (amount uint) (user principal))
+  (begin 
+    (asserts! (is-eq contract-caller .group-stacker) err-not-authorized)
+    (ft-mint? iou-stx amount user)))
+
+
+(define-public (burn (amount uint) (user principal))
+  (begin 
+    (asserts! (is-eq contract-caller .group-stacker) err-not-authorized)
+    (ft-burn? iou-stx amount user)))    
 ;;
 ;; operable functions
 ;;
@@ -66,15 +71,15 @@
 
 ;; returns the token name
 (define-read-only (get-name)
-  (ok "Prepaid STX"))
+  (ok "IOU STX"))
 
 ;; the symbol or "ticker" for this token
 (define-read-only (get-symbol)
-  (ok "iou-stx"))
+  (ok "IOUX"))
 
 ;; the number of decimals used
 (define-read-only (get-decimals)
-  (ok u0))
+  (ok u6))
 
 (define-public (get-token-uri)
   (ok (some u"ipfs://Qm")))

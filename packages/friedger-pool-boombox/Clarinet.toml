@@ -1,15 +1,32 @@
 [project]
-name = "Boom"
+name = "Friedger Pool Boombox"
 
-[contracts.commission-trait]
-path = "contracts/commission.clar"
-depends_on = []
-
-[contracts.nft-trait]
-path = "../common/contracts/nft-trait.clar"
+[contracts.boombox-trait]
+path = "../boombox-admin/contracts/boombox-trait.clar"
 depends_on = []
 
 
-[contracts.boom-nfts]
-path = "contracts/boom-nfts-300.clar"
-depends_on = ["commission-trait", "nft-trait"]
+
+[contracts.boombox-admin]
+path = "../boombox-admin/contracts/boombox-admin.clar"
+depends_on = ["boombox-trait"]
+
+
+[contracts.group-stacker]
+path = "contracts/group-stacker.clar"
+depends_on = ["boombox-trait", "iou-stx", "friedger-pool-payout-hints", "fp-boombox"]
+
+
+[contracts.iou-stx]
+path = "contracts/iou-stx.clar"
+depends_on = []
+
+
+[contracts.fp-boombox]
+path = "contracts/fp-boombox.clar"
+depends_on = []
+
+
+[contracts.friedger-pool-payout-hints]
+path = "contracts/external/friedger-pool-payout-hints.clar"
+depends_on = []
