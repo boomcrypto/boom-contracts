@@ -42,3 +42,39 @@ Once the BTC rewards are received and the are converted to STX, the pool operato
 ```
 (define-public (payout (reward-ustx uint) (nfts (list 750 uint))))
 ```
+
+## Content of This Repository
+
+* Airdrop moon (`airdrop-moon`)
+
+Contracts for the Moon NFTs airdropped to Moonbox Boombox (cycle #28) holders on August 23, 2022 during cycle #40.
+
+* Boom NFTs (`boom-nfts`)
+  
+Contracts for Boom NFTs that can be minted one boom.money. NFTs are grouped together via a collection id.
+
+* Boombox NFTs (`boombox`)
+  
+Contract for Boombox NFTs that represent future stacking rewards. They are minted via Boombox Admin contract.
+
+* Boombox Admin (`boombox-admin`)
+  
+Contract managing stacking via NFTs. The admin contract can handle several NFTs for each cycle. The NFT contract defines the bitcoin reward address. Boombox NFTs use this contract.
+
+* Boomtree (`boomtree`)
+  
+* Common (`common`)
+
+Generic contracts like fungible tokens mainly used for testing
+
+* Friedger Pool Extras (`friedger-pool-extras`)
+
+Contracts helping managing or using the non-custodial stacking pool "Friedger Pool".
+
+* Group Stacker (`group-stacker`)
+
+Contract for handling funds from users for stacking purposes using a Boombox. Based on earlier work of [cooperative stacking](https://github.com/hozzjss/cooperative-stacking).
+
+* Marketplace (`marketplace`)
+  
+Contract for custodial marketplace using escrow during listing.

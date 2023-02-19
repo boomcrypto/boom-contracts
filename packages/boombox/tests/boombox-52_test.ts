@@ -10,7 +10,7 @@ import {
   delegateStx,
   addBoombox,
   poxAllowBoomboxAdminAsContractCaller,
-} from "../../boombox-admin/tests/client/boombox-admin.ts";
+} from "./client/boombox-admin.ts";
 import { setBoomboxAdmin, transfer } from "./client/boombox.ts";
 
 const BOOMBOX_NAME = "boombox-52";
@@ -27,12 +27,12 @@ function mineBlockWith1Boombox(
   return chain.mineBlock([
     setBoomboxAdmin(
       BOOMBOX_NAME,
-      `${deployer.address}.boombox-admin`,
+      "SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3",
       deployer
     ),
     addBoombox(BOOMBOX_NAME, deployer),
     poxAllowBoomboxAdminAsContractCaller(
-      deployer.address + ".boombox-admin",
+      "SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3",
       wallet1
     ),
     delegateStx(1, `${deployer.address}.${BOOMBOX_NAME}`, amount, wallet1),
@@ -346,7 +346,6 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true);
     block.receipts[1].result.expectOk().expectBool(true);
     block.receipts[2].result.expectOk().expectBool(true);
-    console.log("buy events", block.receipts[2].events);
     block.receipts[2].events.expectSTXTransferEvent(
       4_000_000,
       wallet2.address,

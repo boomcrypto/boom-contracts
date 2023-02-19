@@ -11,7 +11,10 @@ contract_id = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait'
 [[project.requirements]]
 contract_id = 'SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.commission-trait'
 
-[contracts.boombox]
+[[project.requirements]]
+contract_id = 'SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3'
+
+[contracts.boombox-28]
 path = 'contracts/boombox-28.clar'
 clarity_version = 1
 epoch = 2.0

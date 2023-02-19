@@ -10,7 +10,7 @@ import {
   delegateStx,
   addBoombox,
   poxAllowBoomboxAdminAsContractCaller
-} from "./../../boombox-admin/tests/client/boombox-admin.ts";
+} from "./client/boombox-admin.ts";
 import {
   transfer,
   setApproved,
@@ -19,7 +19,7 @@ import {
   setBoomboxAdmin,
 } from "./client/boombox.ts";
 
-const BOOMBOX_NAME = "boombox";
+const BOOMBOX_NAME = "boombox-28";
 Clarinet.test({
   name: "User can transfer nft",
   async fn(chain: Chain, accounts: Map<string, Account>) {
@@ -28,9 +28,9 @@ Clarinet.test({
     let wallet2 = accounts.get("wallet_2")!;
     const amount = 100_000_000;
     let block = chain.mineBlock([
-      setBoomboxAdmin(BOOMBOX_NAME, `${deployer.address}.boombox-admin`, deployer),
+      setBoomboxAdmin(BOOMBOX_NAME, "SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3", deployer),
       addBoombox(BOOMBOX_NAME, deployer),
-      poxAllowBoomboxAdminAsContractCaller(deployer.address + ".boombox-admin", wallet1),
+      poxAllowBoomboxAdminAsContractCaller("SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3", wallet1),
       delegateStx(1, `${deployer.address}.${BOOMBOX_NAME}`, amount, wallet1),
     ]);
     block.receipts[0].result.expectOk().expectBool(true);
@@ -56,9 +56,9 @@ Clarinet.test({
     const amount = 100_000_000;
 
     let block = chain.mineBlock([
-      setBoomboxAdmin(BOOMBOX_NAME, `${deployer.address}.boombox-admin`, deployer),
+      setBoomboxAdmin(BOOMBOX_NAME, "SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3", deployer),
       addBoombox(BOOMBOX_NAME, deployer),
-      poxAllowBoomboxAdminAsContractCaller(deployer.address + ".boombox-admin", wallet1),      
+      poxAllowBoomboxAdminAsContractCaller("SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3", wallet1),      
       delegateStx(1, `${deployer.address}.${BOOMBOX_NAME}`, amount, wallet1),
     ]);
     block.receipts[0].result.expectOk().expectBool(true);
@@ -91,10 +91,10 @@ Clarinet.test({
     const amount = 100_000_000;
 
     let block = chain.mineBlock([
-      setBoomboxAdmin(BOOMBOX_NAME, `${deployer.address}.boombox-admin`, deployer),
+      setBoomboxAdmin(BOOMBOX_NAME, "SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3", deployer),
       addBoombox(BOOMBOX_NAME, deployer),
-      poxAllowBoomboxAdminAsContractCaller(deployer.address + ".boombox-admin", wallet1),
-      delegateStx(1, `${deployer.address}.boombox`, amount, wallet1),
+      poxAllowBoomboxAdminAsContractCaller("SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3", wallet1),
+      delegateStx(1, `${deployer.address}.${BOOMBOX_NAME}`, amount, wallet1),
     ]);
     block.receipts[0].result.expectOk().expectBool(true);
     (block.receipts[3].result.expectOk().expectTuple() as any)[
