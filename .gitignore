@@ -2,6 +2,10 @@
 settings/Mainnet.toml
 settings/Testnet.toml
 history.txt
+.idea
 
 # Dependency directories
 node_modules/
+
+#deno tests
+.cache

@@ -18,6 +18,18 @@ export function repay(amount: number, recipient: string, user: Account) {
   );
 }
 
+export function repayMany(amounts: number[], users: string[], user: Account) {
+  return Tx.contractCall(
+    "group-stacker",
+    "repay-many",
+    [
+      types.list(amounts.map((amount) => types.uint(amount))),
+      types.list(users.map((user) => types.principal(user))),
+    ],
+    user.address
+  );
+}
+
 export function delegateStx(boomboxContractId: string, user: Account) {
   return Tx.contractCall(
     "group-stacker",

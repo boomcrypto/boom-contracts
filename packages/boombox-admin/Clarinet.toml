@@ -3,6 +3,9 @@
 name = "boom.money"
 
 
+[[project.requirements]]
+contract_id = "SP3C0TCQS0C0YY8E0V3EJ7V4X9571885D44M8EFWF.arkadiko-automation-trait-v1"
+
 [contracts.boombox-admin]
 path = "contracts/boombox-admin.clar"
 depends_on = ["boombox-trait"]
@@ -15,5 +18,8 @@ depends_on = []
 path = "contracts/boombox-simple.clar"
 depends_on = []
 
+[contracts.boombox-auto]
+path = "contracts/boombox-auto.clar"
+depends_on = []
 
 [notebooks]

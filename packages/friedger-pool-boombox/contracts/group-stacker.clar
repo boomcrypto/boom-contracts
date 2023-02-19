@@ -16,20 +16,20 @@
 
 
 (define-public (repay (amount uint) (user principal))
-    (begin        
+    (begin
         (try! (as-contract (stx-transfer? amount tx-sender user)))
         (try! (contract-call? .iou-stx burn amount user))
         (ok true)))
 
-(define-public (repay-many (details (list 200 {amount: uint, user: principal})))
-    (ok true))
+(define-public (repay-many (amounts (list 200 uint)) (users (list 200 principal)))
+    (ok (map repay amounts users)))
 
 (define-public (delegate-stx (fq-contract <bb-trait>))
     (let ((balance (stx-get-balance (as-contract tx-sender))))
-        (asserts! (> balance min-balance) err-low-balance)     
-        (asserts! (is-eq (contract-of fq-contract) boombox-contract) err-invalid-boombox)   
+        (asserts! (> balance min-balance) err-low-balance)
+        (asserts! (is-eq (contract-of fq-contract) boombox-contract) err-invalid-boombox)
         (try! (err-to-uint (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox allow-contract-caller .boombox-admin none))))
-        (try! (as-contract (contract-call? .boombox-admin delegate-stx 
+        (try! (as-contract (contract-call? .boombox-admin delegate-stx
                 boombox-id fq-contract balance)))
         (try! (err-to-uint (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox revoke-delegate-stx))))
         (unwrap-panic (as-contract (contract-call? .friedger-pool-payout-hints set-payout-recipient beneficary)))

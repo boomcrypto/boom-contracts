@@ -1,6 +1,6 @@
 ;; Boombox 28
 
-(impl-trait .nft-trait.nft-trait)
+(impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
 
 (define-non-fungible-token b-28 uint)
@@ -17,7 +17,7 @@
 ;; data maps and vars
 ;;
 (define-data-var last-id uint u0)
-(define-data-var boombox-admin principal .boombox-admin)
+(define-data-var boombox-admin principal .boombox-admin-v3)
 ;; boombox-admin contract : boombox id
 (define-map boombox-id principal uint)
 ;; approval maps
@@ -71,7 +71,7 @@
   (ok (var-get last-id)))
 
 (define-read-only (get-token-uri (id uint))
-  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreigedomh4xuy5ibnltecal72wz26z7m2u5cvtx2l5cfbydrtxhgas4")))
+  (ok (some "https://cloudflare-ipfs.com/ipfs/bafkreic3emy7vy4azvm56sy3dwsuny4653uzi7ubb36ui63w424kagzfym")))
 
 ;; can only be called by boombox admin
 (define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))

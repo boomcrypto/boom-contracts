@@ -1,0 +1,13 @@
+{
+  "sip": 16,
+  "name": "Boombox [8th Edition] - Moonbox",
+  "description": "This Boombox was hand-drawn in the style of 'Moons' — an upcoming randomly generated NFT collection. Only holders of this edition (aka the 'Moonbox') will have access to mint Moons when they drop. Learn more at the moons.buzz website.",
+  "image": "https://cloudflare-ipfs.com/ipfs/bafybeiaya2humpnp4g3jsxbt7xfd3o6x2mq4ixpcygbrx5ykbsdkibagsq",
+  "properties": {
+    "collection": "Boombox [8th Edition] - Moonbox",
+    "creator": "SP8F65F85PMRZK043DTME3E1TQ4EM5R3VS8TSJC7",
+    "created": 1644775581,
+    "royalty_amount": 2,
+    "royalty_address": "SP8F65F85PMRZK043DTME3E1TQ4EM5R3VS8TSJC7"
+  }
+}

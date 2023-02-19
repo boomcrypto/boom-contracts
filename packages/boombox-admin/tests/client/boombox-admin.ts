@@ -24,8 +24,6 @@ export function addBoombox(
   lockingPeriod: number,
   minAmount: number,
   owner: Account,
-  extendable: boolean,
-  open: boolean,
   account: Account
 ) {
   return Tx.contractCall(
@@ -38,8 +36,6 @@ export function addBoombox(
       types.uint(minAmount),
       types.tuple({ version: "0x01", hashbytes: "0x1234" }),
       types.principal(owner.address),
-      types.bool(extendable),
-      types.bool(open),
     ],
     account.address
   );
