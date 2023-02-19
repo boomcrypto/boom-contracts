@@ -6,7 +6,7 @@ telemetry = false
 cache_dir = './.cache'
 requirements = []
 [contracts.booster]
-path = 'contracts/booster.clar'
+path = 'contracts/donate.clar'
 clarity_version = 1
 epoch = 2.0
 [repl.analysis]
