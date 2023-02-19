@@ -8,8 +8,8 @@
 ;; constants
 ;;
 (define-constant deployer tx-sender)
-;; Stackerspool added constants
-(define-data-var royalty-percent uint u0)
+(define-data-var royalty-percent uint u250)
+(define-data-var artist-address principal 'SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW)
 (define-map token-count principal uint)
 (define-map market uint {price: uint, commission: principal})
 
@@ -17,7 +17,7 @@
 (define-constant err-not-authorized (err u403))
 (define-constant err-not-found (err u404))
 (define-constant err-invalid-stacks-tip (err u608))
-(define-constant err-airdrop-called (err 701))
+(define-constant err-airdrop-called (err u701))
 
 ;; Stackerspool added errors constants
 (define-constant error (err u1000))
@@ -56,19 +56,17 @@
     (map-get? token-count account)))
 
 (define-private (trnsfr (id uint) (sender principal) (recipient principal))
-  (match (nft-transfer? b-52 id sender recipient)
-    success
-      (let
-        ((sender-balance (get-balance sender))
-        (recipient-balance (get-balance recipient)))
-          (map-set token-count
-            sender
-            (- sender-balance u1))
-          (map-set token-count
-            recipient
-            (+ recipient-balance u1))
-          (ok success))
-    error error))
+    (let
+      ((sender-balance (get-balance sender))
+      (recipient-balance (get-balance recipient)))
+        (try! (nft-transfer? b-52 id sender recipient))
+        (map-set token-count
+          sender
+          (- sender-balance u1))
+        (map-set token-count
+          recipient
+          (+ recipient-balance u1))
+        (ok true)))
 
 (define-private (is-sender-owner (id uint))
   (let ((owner (unwrap! (nft-get-owner? b-52 id) false)))
@@ -101,9 +99,9 @@
   (let ((owner (unwrap! (nft-get-owner? b-52 id) err-not-found))
       (listing (unwrap! (map-get? market id) err-listing))
       (price (get price listing)))
-    (asserts! (is-eq (contract-of comm-trait) (get commission listing)) (err err-wrong-commission))
+    (asserts! (is-eq (contract-of comm-trait) (get commission listing)) err-wrong-commission)
     (try! (stx-transfer? price tx-sender owner))
-    (try! (pay-royalty price))
+    (try! (pay-royalties price))
     (try! (contract-call? comm-trait pay id price))
     (try! (trnsfr id owner tx-sender))
     (map-delete market id)
@@ -113,12 +111,10 @@
                 action: "buy-in-ustx" }})
     (ok true)))
 
-(define-data-var royalty-percent uint u250)
-
 (define-read-only (get-royalty-percent)
   (ok (var-get royalty-percent)))
 
-(define-private (pay-royalty (price uint))
+(define-private (pay-royalties (price uint))
   (let (
     (royalty (/ (* price (var-get royalty-percent)) u10000))
   )
@@ -131,6 +127,7 @@
 ;; transfer functions
 (define-public (transfer (id uint) (sender principal) (recipient principal))
   (let ((owner (unwrap! (nft-get-owner? b-52 id) err-not-found)))
+    (asserts! (is-none (map-get? market id)) err-listing)
     (asserts! (is-approved-with-owner id contract-caller owner) err-not-authorized)
     (nft-transfer? b-52 id sender recipient)))
 
@@ -160,6 +157,7 @@
     (asserts! (is-eq bb-id (unwrap! (map-get? boombox-id contract-caller) err-not-authorized)) err-not-authorized)
     (var-set last-id next-id)
     (try! (nft-mint? b-52 next-id stacker))
+    (map-set token-count stacker (+ u1 (get-balance stacker)))
     (ok next-id)))
 
 ;; can only be called by boombox admin
@@ -184,7 +182,7 @@
       (last-nft-id (var-get last-id))
     )
     (begin
-    (asserts! (is-eq contract-caller deployer) err-not-authorized)
+      (asserts! (is-eq contract-caller deployer) err-not-authorized)
       (asserts! (is-eq false (var-get airdrop-called)) err-airdrop-called)
       (try! (nft-mint? b-52 u1 'SP25QZMBZ43ZWMCW9FB102XT4EFD602KZ6V0TBY7W))
       (map-set token-count 'SP25QZMBZ43ZWMCW9FB102XT4EFD602KZ6V0TBY7W (+ (get-balance 'SP25QZMBZ43ZWMCW9FB102XT4EFD602KZ6V0TBY7W) u1))

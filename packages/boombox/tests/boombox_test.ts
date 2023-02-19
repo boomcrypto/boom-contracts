@@ -19,7 +19,7 @@ import {
   setBoomboxAdmin,
 } from "./client/boombox.ts";
 
-
+const BOOMBOX_NAME = "boombox";
 Clarinet.test({
   name: "User can transfer nft",
   async fn(chain: Chain, accounts: Map<string, Account>) {
@@ -28,10 +28,10 @@ Clarinet.test({
     let wallet2 = accounts.get("wallet_2")!;
     const amount = 100_000_000;
     let block = chain.mineBlock([
-      setBoomboxAdmin(`${deployer.address}.boombox-admin`, deployer),
-      addBoombox("boombox", deployer),
+      setBoomboxAdmin(BOOMBOX_NAME, `${deployer.address}.boombox-admin`, deployer),
+      addBoombox(BOOMBOX_NAME, deployer),
       poxAllowBoomboxAdminAsContractCaller(deployer.address + ".boombox-admin", wallet1),
-      delegateStx(1, `${deployer.address}.boombox`, amount, wallet1),
+      delegateStx(1, `${deployer.address}.${BOOMBOX_NAME}`, amount, wallet1),
     ]);
     block.receipts[0].result.expectOk().expectBool(true);
     block.receipts[1].result.expectOk().expectUint(1);
@@ -40,7 +40,7 @@ Clarinet.test({
       "nft-id"
     ].expectUint(1);
 
-    block = chain.mineBlock([transfer(1, wallet1, wallet2, wallet1)]);
+    block = chain.mineBlock([transfer(BOOMBOX_NAME, 1, wallet1, wallet2, wallet1)]);
 
     block.receipts[0].result.expectOk().expectBool(true);
   },
@@ -56,10 +56,10 @@ Clarinet.test({
     const amount = 100_000_000;
 
     let block = chain.mineBlock([
-      setBoomboxAdmin(`${deployer.address}.boombox-admin`, deployer),
-      addBoombox("boombox", deployer),
+      setBoomboxAdmin(BOOMBOX_NAME, `${deployer.address}.boombox-admin`, deployer),
+      addBoombox(BOOMBOX_NAME, deployer),
       poxAllowBoomboxAdminAsContractCaller(deployer.address + ".boombox-admin", wallet1),      
-      delegateStx(1, `${deployer.address}.boombox`, amount, wallet1),
+      delegateStx(1, `${deployer.address}.${BOOMBOX_NAME}`, amount, wallet1),
     ]);
     block.receipts[0].result.expectOk().expectBool(true);
     (block.receipts[3].result.expectOk().expectTuple() as any)[
@@ -67,9 +67,9 @@ Clarinet.test({
     ].expectUint(1);
 
     block = chain.mineBlock([
-      setApproved(1, wallet3, true, wallet1),
-      transfer(1, wallet1, wallet2, wallet3),
-      getOwner(1, wallet1),
+      setApproved(BOOMBOX_NAME, 1, wallet3, true, wallet1),
+      transfer(BOOMBOX_NAME, 1, wallet1, wallet2, wallet3),
+      getOwner(BOOMBOX_NAME, 1, wallet1),
     ]);
 
     block.receipts[0].result.expectOk().expectBool(true);
@@ -91,8 +91,8 @@ Clarinet.test({
     const amount = 100_000_000;
 
     let block = chain.mineBlock([
-      setBoomboxAdmin(`${deployer.address}.boombox-admin`, deployer),
-      addBoombox("boombox", deployer),
+      setBoomboxAdmin(BOOMBOX_NAME, `${deployer.address}.boombox-admin`, deployer),
+      addBoombox(BOOMBOX_NAME, deployer),
       poxAllowBoomboxAdminAsContractCaller(deployer.address + ".boombox-admin", wallet1),
       delegateStx(1, `${deployer.address}.boombox`, amount, wallet1),
     ]);
@@ -102,9 +102,9 @@ Clarinet.test({
     ].expectUint(1);
 
     block = chain.mineBlock([
-      setApprovedAll(wallet3, true, wallet1),
-      transfer(1, wallet1, wallet2, wallet3),
-      getOwner(1, wallet1),
+      setApprovedAll(BOOMBOX_NAME, wallet3, true, wallet1),
+      transfer(BOOMBOX_NAME, 1, wallet1, wallet2, wallet3),
+      getOwner(BOOMBOX_NAME, 1, wallet1),
     ]);
 
     block.receipts[0].result.expectOk().expectBool(true);

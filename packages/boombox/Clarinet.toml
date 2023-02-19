@@ -96,6 +96,11 @@ path = '../common/contracts/commission.clar'
 clarity_version = 1
 epoch = 2.0
 
+[contracts.commission-nop]
+path = '../common/contracts/commission-nop.clar'
+clarity_version = 1
+epoch = 2.0
+
 [contracts.nft-trait]
 path = '../common/contracts/nft-trait.clar'
 clarity_version = 1

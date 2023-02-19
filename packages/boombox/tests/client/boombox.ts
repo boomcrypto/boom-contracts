@@ -1,13 +1,14 @@
 import { Tx, Account, types, Chain } from "./../../../common/tests/deps.ts";
 
 export function transfer(
+  boomboxName: string,
   id: number,
   from: Account,
   to: Account,
   user: Account
 ) {
   return Tx.contractCall(
-    "boombox",
+    boomboxName,
     "transfer",
     [
       types.uint(id),
@@ -19,13 +20,14 @@ export function transfer(
 }
 
 export function setApproved(
+  boomboxName: string,
   id: number,
   operator: Account,
   approved: boolean,
   user: Account
 ) {
   return Tx.contractCall(
-    "boombox",
+    boomboxName,
     "set-approved",
     [types.uint(id), types.principal(operator.address), types.bool(approved)],
     user.address
@@ -33,34 +35,35 @@ export function setApproved(
 }
 
 export function setApprovedAll(
+  boomboxName: string,
   operator: Account,
   approved: boolean,
   user: Account
 ) {
   return Tx.contractCall(
-    "boombox",
+    boomboxName,
     "set-approved-all",
     [types.principal(operator.address), types.bool(approved)],
     user.address
   );
 }
 
-
 export function setBoomboxAdmin(
-  boomboxAdmin: string,  
+  boomboxName: string,
+  boomboxAdmin: string,
   user: Account
 ) {
   return Tx.contractCall(
-    "boombox",
+    boomboxName,
     "set-boombox-admin",
     [types.principal(boomboxAdmin)],
     user.address
   );
 }
 
-export function getOwner(id: number, user: Account) {
+export function getOwner(boomboxName: string, id: number, user: Account) {
   return Tx.contractCall(
-    "boombox",
+    boomboxName,
     "get-owner",
     [types.uint(id)],
     user.address
