@@ -22,7 +22,7 @@
     cycle: uint,
     locking-period: uint,
     minimum-amount: uint,
-    pox-addr: {version: (buff 1), hashbytes: (buff 20)},
+    pox-addr: {version: (buff 1), hashbytes: (buff 32)},
     owner: principal,
     active: bool}) (list))
 
@@ -34,7 +34,7 @@
 ;; @param minimum-amount; minimum stacking amount for this boombox
 ;; @param owner; owner/admin of this boombox
 ;; @param pox-addr; reward pool address
-(define-public (add-boombox (nft-contract <bb-trait>) (cycle uint) (locking-period uint) (minimum-amount uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (owner principal))
+(define-public (add-boombox (nft-contract <bb-trait>) (cycle uint) (locking-period uint) (minimum-amount uint) (pox-addr {version: (buff 1), hashbytes: (buff 32)}) (owner principal))
   (let ((fq-contract (contract-of nft-contract))
         (id (+ u1 (var-get last-id))))
     (asserts! (> cycle (current-cycle)) err-too-late)
@@ -60,7 +60,7 @@
                                       cycle: uint,
                                       locking-period: uint,
                                       minimum-amount: uint,
-                                      pox-addr: {version: (buff 1), hashbytes: (buff 20)},
+                                      pox-addr: {version: (buff 1), hashbytes: (buff 32)},
                                       owner: principal,
                                       active: bool})
                             (result (list 100 {id: uint,
@@ -68,7 +68,7 @@
                                            cycle: uint,
                                            locking-period: uint,
                                            minimum-amount: uint,
-                                           pox-addr: {version: (buff 1), hashbytes: (buff 20)},
+                                           pox-addr: {version: (buff 1), hashbytes: (buff 32)},
                                            owner: principal,
                                            active: bool})))
   (unwrap-panic
@@ -98,18 +98,18 @@
 (define-private (get-total-stacked (id uint))
   (map-get? total-stacked id))
 
-(define-private (pox-delegate-stx-and-stack (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
-  (let ((ignore-result-revoke (contract-call? 'SP000000000000000000002Q6VF78.pox revoke-delegate-stx))
+(define-private (pox-delegate-stx-and-stack (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 32)}) (locking-period uint))
+  (let ((ignore-result-revoke (contract-call? 'SP000000000000000000002Q6VF78.pox-2 revoke-delegate-stx))
         (start-block-ht (+ burn-block-height u1))
         (stacker tx-sender))
-      (match (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stx amount-ustx accnt none none)
+      (match (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stx amount-ustx accnt none none)
         success
-            (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox delegate-stack-stx stacker amount-ustx pox-addr start-block-ht locking-period))
+            (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stack-stx stacker amount-ustx pox-addr start-block-ht locking-period))
               stack-success (ok stack-success)
               stack-error (print (err (to-uint stack-error))))
         error (err (to-uint error)))))
 
-(define-private (delegatedly-stack (id uint) (nft-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
+(define-private (delegatedly-stack (id uint) (nft-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 32)}) (locking-period uint))
   (match (pox-delegate-stx-and-stack amount-ustx pox-addr locking-period)
     success-pox
             (begin
@@ -138,10 +138,10 @@
       error-minting (err error-minting))))
 
 ;; function for pool admins
-(define-public (stack-aggregation-commit (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (reward-cycle uint))
+(define-public (stack-aggregation-commit (pox-addr {version: (buff 1), hashbytes: (buff 32)}) (reward-cycle uint))
   (begin
     (asserts! (>= (+ burn-block-height blocks-before-rewards) (reward-cycle-to-burn-height reward-cycle)) err-too-early)
-    (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox stack-aggregation-commit pox-addr reward-cycle))
+    (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 stack-aggregation-commit pox-addr reward-cycle))
       success (ok success)
       error (err (to-uint error)))))
 
@@ -171,7 +171,7 @@
 (define-public (allow-contract-caller (this-contract principal))
   (begin
     (asserts! (is-eq tx-sender dplyr) err-not-authorized)
-    (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox allow-contract-caller this-contract none))
+    (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 allow-contract-caller this-contract none))
       success (ok true)
       error (err (to-uint error)))))
 
@@ -179,12 +179,12 @@
 ;; What's the reward cycle number of the burnchain block height?
 ;; Will runtime-abort if height is less than the first burnchain block (this is intentional)
 (define-read-only (burn-height-to-reward-cycle (height uint))
-    (let ((pox-info (unwrap! (contract-call? 'SP000000000000000000002Q6VF78.pox get-pox-info) u0)))
+    (let ((pox-info (unwrap! (contract-call? 'SP000000000000000000002Q6VF78.pox-2 get-pox-info) u0)))
      (/ (- height (get first-burnchain-block-height pox-info)) (get reward-cycle-length pox-info))))
 
 ;; What's the block height at the start of a given reward cycle?
 (define-read-only (reward-cycle-to-burn-height (cycle uint))
-    (let ((pox-info (unwrap! (contract-call? 'SP000000000000000000002Q6VF78.pox get-pox-info) u0)))
+    (let ((pox-info (unwrap! (contract-call? 'SP000000000000000000002Q6VF78.pox-2 get-pox-info) u0)))
      (+ (get first-burnchain-block-height pox-info) (* cycle (get reward-cycle-length pox-info)))))
 
 ;; What's the current PoX reward cycle?
@@ -195,7 +195,7 @@
     cycle: uint,
     locking-period: uint,
     minimum-amount: uint,
-    pox-addr: {version: (buff 1), hashbytes: (buff 20)},
+    pox-addr: {version: (buff 1), hashbytes: (buff 32)},
     owner: principal,
     active: bool}))
   (var-set boombox-list

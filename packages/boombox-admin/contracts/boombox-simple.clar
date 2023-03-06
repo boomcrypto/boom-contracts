@@ -1,6 +1,6 @@
 (define-data-var last-nft-id uint u0)
 
-(define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 20)}) (locking-period uint))
+(define-public (mint (bb-id uint) (stacker principal) (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 32)}) (locking-period uint))
   (let ((nft-id (+ u1 (var-get last-nft-id))))
     (var-set last-nft-id nft-id)
     (print {bb-id: bb-id, stacker: stacker, amount-ustx: amount-ustx, pox-addr: pox-addr, locking-period: locking-period})

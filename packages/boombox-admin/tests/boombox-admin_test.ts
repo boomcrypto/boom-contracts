@@ -6,7 +6,7 @@ import {
   types,
   assertEquals,
 } from "../../common/tests/deps.ts";
-import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin.ts";
+import { poxAllowBoomboxAdminAsContractCaller, getPoxInfo } from "./client/boombox-admin.ts";
 
 const MAX_NUMBER_OF_BOOMBOXES = 100;
 const CYCLE_LENGTH = 2100;
@@ -14,7 +14,6 @@ const PREPARE_LENGTH = 100;
 const BLOCKS_BEFORE_COMMIT = 200;
 
 function addBoombox(
-
   boombox: string,
   cycle: number,
   lockingPeriod: number,
@@ -30,7 +29,10 @@ function addBoombox(
       types.uint(cycle),
       types.uint(lockingPeriod),
       types.uint(minAmount),
-      types.tuple({ version: "0x01", hashbytes: "0x1234" }),
+      types.tuple({
+        version: "0x01",
+        hashbytes: "0x1234123412341234123412341234123412341234",
+      }),
       types.principal(owner.address),
     ],
     account.address
@@ -55,7 +57,13 @@ function stackAggregationCommit(cycle: number, account: Account) {
   return Tx.contractCall(
     "boombox-admin",
     "stack-aggregation-commit",
-    [types.tuple({ version: "0x01", hashbytes: "0x1234" }), types.uint(cycle)],
+    [
+      types.tuple({
+        version: "0x01",
+        hashbytes: "0x1234123412341234123412341234123412341234",
+      }),
+      types.uint(cycle),
+    ],
     account.address
   );
 }
@@ -91,7 +99,7 @@ Clarinet.test({
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
     const amount = 100_000_000_000_000_000;
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT - 1);
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT - 2);
     let block = chain.mineBlock([
       poxAllowBoomboxAdminAsContractCaller(
         deployer.address + ".boombox-admin",
@@ -145,8 +153,6 @@ Clarinet.test({
   async fn(chain: Chain, accounts: Map<string, Account>) {
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
-    const boombox = `${deployer.address}.boombox-simple`;
-    const amount = 10000000000;
     chain.mineEmptyBlock(CYCLE_LENGTH - PREPARE_LENGTH);
 
     let block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
@@ -160,8 +166,8 @@ Clarinet.test({
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
-    const amount = 10000000000;
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT - 2);
+    const amount = 10_000_000_000_000;
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT - 3);
     let block = chain.mineBlock([
       poxAllowBoomboxAdminAsContractCaller(
         deployer.address + ".boombox-admin",
@@ -175,7 +181,6 @@ Clarinet.test({
     block.receipts[2].result.expectOk().expectTuple();
 
     block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT - 1);
     block.receipts[0].result.expectErr().expectUint(607); // to early
   },
 });
