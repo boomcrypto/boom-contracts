@@ -254,18 +254,23 @@
       nft-id (delegatedly-stack id nft-id tx-sender amount-ustx pox-addr locking-period)
       error-minting (err error-minting))))
 
+;; only stacker can increase
 (define-public (increase-stacked-stx (id uint) (nft-id uint) (fq-contract <bb-trait>) (amount-increase uint))
   (let ((details (unwrap! (map-get? meta {id: id, nft-id: nft-id}) err-not-found))
     (stacker (get stacker details))
     (pox-addr (get pox-addr (unwrap! (element-at? (var-get boombox-list) (- id u1)) err-not-found))))
+      (asserts! (check-caller-allowed) err-stacking-permission-denied)
       (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stack-increase stacker pox-addr amount-increase))
       success (ok success)
       error (err (to-uint error)))))
 
+;; any user can extend after half of the cycle
 (define-public (extend-stacking (id uint) (nft-id uint) (fq-contract <bb-trait>) (lock-period uint))
   (let ((details (unwrap! (map-get? meta {id: id, nft-id: nft-id}) err-not-found))
-    (stacker (get stacker details))
-    (pox-addr (get pox-addr (unwrap! (element-at? (var-get boombox-list) (- id u1)) err-not-found))))
+          (stacker (get stacker details))
+          (current-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-2 current-pox-reward-cycle))
+          (pox-addr (get pox-addr (unwrap! (element-at? (var-get boombox-list) (- id u1)) err-not-found))))
+      (asserts! (can-extend-now current-cycle) err-too-early)
       (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stack-extend stacker pox-addr lock-period))
       success (ok success)
       error (err (to-uint error)))))
@@ -309,7 +314,8 @@
     ihh (at-block ihh (ok (get-total-stacked-ustx id nfts)))
     err-invalid-stacks-tip))
 
-
+(define-read-only (can-extend-now (cycle uint))
+  (> burn-block-height (+ (contract-call? 'ST000000000000000000002AMW42H.pox-2 reward-cycle-to-burn-height cycle) half-cycle-length)))
 
 ;; What's the reward cycle number of the burnchain block height?
 ;; Will runtime-abort if height is less than the first burnchain block (this is intentional)
