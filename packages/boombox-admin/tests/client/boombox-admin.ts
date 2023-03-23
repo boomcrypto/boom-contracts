@@ -1,8 +1,9 @@
 import { Tx, Account, types, Chain } from "../../../common/tests/deps.ts";
 
-
-
-export function poxAllowBoomboxAdminAsContractCaller(boomboxAdminContractId: string, account: Account, ) {
+export function poxAllowBoomboxAdminAsContractCaller(
+  boomboxAdminContractId: string,
+  account: Account
+) {
   return Tx.contractCall(
     "SP000000000000000000002Q6VF78.pox-2",
     "allow-contract-caller",
@@ -11,8 +12,7 @@ export function poxAllowBoomboxAdminAsContractCaller(boomboxAdminContractId: str
   );
 }
 
-
-export function getPoxInfo(chain: Chain,account: Account, ) {
+export function getPoxInfo(chain: Chain, account: Account) {
   return chain.callReadOnlyFn(
     "SP000000000000000000002Q6VF78.pox-2",
     "get-pox-info",
@@ -32,8 +32,14 @@ export function addBoombox(boomboxNftContractName: String, user: Account) {
       types.uint(1),
       types.uint(1),
       types.uint(40000000),
-      types.tuple({ version: "0x01", hashbytes: "0x1234123412341234123412341234123412341234" }),
+      types.tuple({
+        version: "0x01",
+        hashbytes: "0x1234123412341234123412341234123412341234",
+      }),
       types.principal(user.address),
+      types.principal(
+        `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${boomboxNftContractName}`
+      ),
     ],
     user.address
   );
