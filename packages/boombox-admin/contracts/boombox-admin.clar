@@ -9,7 +9,7 @@
 ;; Rewards are distributed to the owner of the NFT
 ;; at the end of each cycle according to the distribution rules.
 
-(use-trait bb-trait .boombox-trait.boombox-trait)
+(use-trait bb-trait .boombox-trait-v2.boombox-trait)
 
 (define-trait distribution-trait
   (

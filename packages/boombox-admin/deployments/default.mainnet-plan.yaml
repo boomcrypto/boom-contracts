@@ -1,0 +1,17 @@
+---
+id: 0
+name: Mainnet deployment
+network: mainnet
+stacks-node: "https://stacks-node-api.mainnet.stacks.co/"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-publish:
+            contract-name: boombox-admin-v5
+            expected-sender: SP2RTE7F21N6GQ6BBZR7JGGRWAT0T5Q3Z9ZHB9KRS
+            cost: 3000000
+            path: contracts/boombox-admin.clar
+            anchor-block-only: true
+            clarity-version: 2
