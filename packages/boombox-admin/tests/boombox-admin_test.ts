@@ -6,15 +6,25 @@ import {
   types,
   assertEquals,
 } from "../../common/tests/deps.ts";
-import { poxAllowBoomboxAdminAsContractCaller } from "./client/boombox-admin.ts";
+import {
+  poxAllowBoomboxAdminAsContractCaller,
+  getPoxInfo,
+} from "./client/boombox-admin.ts";
+import {
+  expectPartialStackedByCycle,
+  expectTotalStackedByCycle,
+} from "./utils.ts";
 
 const MAX_NUMBER_OF_BOOMBOXES = 100;
 const CYCLE_LENGTH = 2100;
 const PREPARE_LENGTH = 100;
-const BLOCKS_BEFORE_COMMIT = 200;
+const BLOCKS_BEFORE_CYCLE_START = 3;
+const poolPoxAddr = {
+  version: "0x01",
+  hashbytes: "0x1234123412341234123412341234123412341234",
+};
 
 function addBoombox(
-
   boombox: string,
   cycle: number,
   lockingPeriod: number,
@@ -30,8 +40,9 @@ function addBoombox(
       types.uint(cycle),
       types.uint(lockingPeriod),
       types.uint(minAmount),
-      types.tuple({ version: "0x01", hashbytes: "0x1234" }),
+      types.tuple(poolPoxAddr),
       types.principal(owner.address),
+      types.principal(boombox), // distribution trait
     ],
     account.address
   );
@@ -55,7 +66,13 @@ function stackAggregationCommit(cycle: number, account: Account) {
   return Tx.contractCall(
     "boombox-admin",
     "stack-aggregation-commit",
-    [types.tuple({ version: "0x01", hashbytes: "0x1234" }), types.uint(cycle)],
+    [
+      types.tuple({
+        version: "0x01",
+        hashbytes: "0x1234123412341234123412341234123412341234",
+      }),
+      types.uint(cycle),
+    ],
     account.address
   );
 }
@@ -91,7 +108,8 @@ Clarinet.test({
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
     const amount = 100_000_000_000_000_000;
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT - 1);
+    const expectedLockedAmount = amount - 1_000_000;
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_CYCLE_START - 2);
     let block = chain.mineBlock([
       poxAllowBoomboxAdminAsContractCaller(
         deployer.address + ".boombox-admin",
@@ -100,20 +118,69 @@ Clarinet.test({
       addBoombox(boombox, 1, 1, 40, wallet_1, wallet_1),
       delegateStx(1, boombox, amount, wallet_1),
     ]);
-    assertEquals(block.height, CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT + 1);
+    assertEquals(block.height, CYCLE_LENGTH - BLOCKS_BEFORE_CYCLE_START + 1);
     block.receipts[0].result.expectOk().expectBool(true);
     block.receipts[1].result.expectOk().expectUint(1);
     const tuple = block.receipts[2].result.expectOk().expectTuple() as any;
     tuple.id.expectUint(1);
     tuple["nft-id"].expectUint(1);
     const pox = tuple.pox.expectTuple();
-    pox["lock-amount"].expectUint(amount);
+    pox["lock-amount"].expectUint(expectedLockedAmount);
     pox.stacker.expectPrincipal(wallet_1.address);
     pox["unlock-burn-height"].expectUint(2 * CYCLE_LENGTH);
 
-    block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
-    assertEquals(block.height, CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT + 2);
+    expectPartialStackedByCycle(
+      poolPoxAddr,
+      1,
+      undefined, // all delegated stx commited through delegate-stx calls
+      chain,
+      deployer
+    );
+    expectTotalStackedByCycle(1, 0, expectedLockedAmount, chain, deployer);
+  },
+});
+
+Clarinet.test({
+  name: "Ensure that user can delgate small stx",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    let deployer = accounts.get("deployer")!;
+    let wallet_1 = accounts.get("wallet_1")!;
+    const boombox = `${deployer.address}.boombox-simple`;
+    const amount = 100_000_000;
+    const expectedLockedAmount = amount - 1_000_000;
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_CYCLE_START - 2);
+    let block = chain.mineBlock([
+      poxAllowBoomboxAdminAsContractCaller(
+        deployer.address + ".boombox-admin",
+        wallet_1
+      ),
+      addBoombox(boombox, 1, 1, 40, wallet_1, wallet_1),
+      delegateStx(1, boombox, amount, wallet_1),
+    ]);
+    assertEquals(block.height, CYCLE_LENGTH - BLOCKS_BEFORE_CYCLE_START + 1);
     block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[1].result.expectOk().expectUint(1);
+    // verify tx 2
+    const delegateStxTuple = block.receipts[2].result
+      .expectOk()
+      .expectTuple() as any;
+    delegateStxTuple.id.expectUint(1);
+    delegateStxTuple["nft-id"].expectUint(1);
+
+    const pox = delegateStxTuple.pox.expectTuple();
+    pox["lock-amount"].expectUint(expectedLockedAmount);
+    pox.stacker.expectPrincipal(wallet_1.address);
+    pox["unlock-burn-height"].expectUint(2 * CYCLE_LENGTH);
+
+   
+    expectPartialStackedByCycle(
+      poolPoxAddr,
+      1,
+      expectedLockedAmount, // all delegated stx still pending
+      chain,
+      deployer
+    );
+    expectTotalStackedByCycle(1, 0, undefined, chain, deployer);
   },
 });
 
@@ -123,8 +190,8 @@ Clarinet.test({
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
-    const amount = 10000000000;
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT);
+    const amount = 10_000_000;
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_CYCLE_START);
     let block = chain.mineBlock([
       poxAllowBoomboxAdminAsContractCaller(
         deployer.address + ".boombox-admin",
@@ -133,35 +200,85 @@ Clarinet.test({
       addBoombox(boombox, 1, 1, 40, wallet_1, wallet_1),
       delegateStx(1, boombox, amount, wallet_1),
     ]);
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT + 1);
     block.receipts[0].result.expectOk().expectBool(true);
     block.receipts[1].result.expectOk().expectUint(1);
-    block.receipts[2].result.expectErr().expectUint(606); // too late
+    block.receipts[2].result
+      .expectOk()
+      .expectTuple()
+      .pox.expectTuple()
+      ["unlock-burn-height"].expectUint(4200);
+
+    chain.mineEmptyBlock(2);
+    block = chain.mineBlock([delegateStx(1, boombox, amount, wallet_1)]);
+    block.receipts[0].result.expectErr().expectUint(606); // too late
   },
 });
 
 Clarinet.test({
-  name: "Ensure that user can't stack aggreagte commit without any delegation",
+  name: "Ensure that user can stack aggregate commit for next cycle with locking period 2",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
-    const amount = 10000000000;
+    const lockingPeriod = 2;
+    const amount = 21_000_000_000_000;
+    const expectedLockedAmount = amount - 1_000_000;
+    let block = chain.mineBlock([
+      poxAllowBoomboxAdminAsContractCaller(
+        deployer.address + ".boombox-admin",
+        wallet_1
+      ),
+      addBoombox(boombox, 1, lockingPeriod, 40, wallet_1, wallet_1),
+      delegateStx(1, boombox, amount, wallet_1),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[0].result.expectOk().expectBool(true); // commit happened
+
+    expectPartialStackedByCycle(
+      poolPoxAddr,
+      1,
+      undefined, // all delegated stx commited
+      chain,
+      deployer
+    );
+    expectTotalStackedByCycle(1, 0, expectedLockedAmount, chain, deployer);
+
+
+    chain.mineEmptyBlock(CYCLE_LENGTH);
+    block = chain.mineBlock([stackAggregationCommit(2, wallet_1)]);
+    block.receipts[0].result.expectOk().expectBool(true); // commit for cycle 2
+    expectPartialStackedByCycle(
+      poolPoxAddr,
+      2,
+      undefined, // all delegated stx commited
+      chain,
+      deployer
+    );
+    expectTotalStackedByCycle(2, 0, expectedLockedAmount, chain, deployer);
+  },
+});
+
+Clarinet.test({
+  name: "Ensure that user can try stack aggreagte commit without any delegation",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    let deployer = accounts.get("deployer")!;
+    let wallet_1 = accounts.get("wallet_1")!;
     chain.mineEmptyBlock(CYCLE_LENGTH - PREPARE_LENGTH);
 
     let block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
-    block.receipts[0].result.expectErr().expectUint(4); // no such principal
+    block.receipts[0].result.expectOk().expectBool(false); // no commit happened
   },
 });
 
 Clarinet.test({
-  name: "Ensure that user can't stack aggregate commit stx before timelimit",
+  name: "Ensure that user can stack aggregate commit at any time",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
-    const amount = 10000000000;
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT - 2);
+    const amount = 10_000_000_000_000;
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_CYCLE_START - 3);
     let block = chain.mineBlock([
       poxAllowBoomboxAdminAsContractCaller(
         deployer.address + ".boombox-admin",
@@ -175,8 +292,7 @@ Clarinet.test({
     block.receipts[2].result.expectOk().expectTuple();
 
     block = chain.mineBlock([stackAggregationCommit(1, wallet_1)]);
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT - 1);
-    block.receipts[0].result.expectErr().expectUint(607); // to early
+    block.receipts[0].result.expectOk().expectBool(false); // no commit happened
   },
 });
 
@@ -186,7 +302,7 @@ Clarinet.test({
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT);
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_CYCLE_START);
     let block = chain.mineBlock([
       poxAllowBoomboxAdminAsContractCaller(
         deployer.address + ".boombox-admin",
@@ -243,6 +359,9 @@ Clarinet.test({
         wallet_1
       ),
     ]);
+    // this throws a runtime error
+    // clarinet prints this as an error, but the test passes
+    // as the runtime error is expected
     assertEquals(block.receipts.length, 0);
   },
 });
@@ -253,7 +372,7 @@ Clarinet.test({
     let deployer = accounts.get("deployer")!;
     let wallet_1 = accounts.get("wallet_1")!;
     const boombox = `${deployer.address}.boombox-simple`;
-    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_COMMIT);
+    chain.mineEmptyBlock(CYCLE_LENGTH - BLOCKS_BEFORE_CYCLE_START);
     let block = chain.mineBlock([
       poxAllowBoomboxAdminAsContractCaller(
         deployer.address + ".boombox-admin",
@@ -267,7 +386,11 @@ Clarinet.test({
     block.receipts[2].result.expectOk().expectUint(2);
 
     block = chain.mineBlock([haltBoombox(2, deployer)]);
-    block.receipts[0].result.expectOk().expectBool(true);
+    block.receipts[0].result
+      .expectOk()
+      .expectList()
+      [2 - 1].expectTuple()
+      .active.expectBool(false);
 
     let allBoomboxesResponse = chain.callReadOnlyFn(
       "boombox-admin",

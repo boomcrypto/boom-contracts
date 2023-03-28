@@ -1,7 +1,10 @@
 
 [project]
 name = "boom.money"
-
+description = ""
+authors = []
+telemetry = true
+cache_dir = "./.cache"
 
 [[project.requirements]]
 contract_id = "SP3C0TCQS0C0YY8E0V3EJ7V4X9571885D44M8EFWF.arkadiko-automation-trait-v1"
@@ -9,17 +12,29 @@ contract_id = "SP3C0TCQS0C0YY8E0V3EJ7V4X9571885D44M8EFWF.arkadiko-automation-tra
 [contracts.boombox-admin]
 path = "contracts/boombox-admin.clar"
 depends_on = ["boombox-trait"]
+clarity_version = 2
+epoch = 2.1
 
 [contracts.boombox-trait]
 path = "contracts/boombox-trait.clar"
 depends_on = []
+clarity_version = 2
+epoch = 2.1
 
 [contracts.boombox-simple]
 path = "contracts/boombox-simple.clar"
 depends_on = []
+clarity_version = 2
+epoch = 2.1
 
 [contracts.boombox-auto]
 path = "contracts/boombox-auto.clar"
 depends_on = []
+clarity_version = 2
+epoch = 2.1
 
 [notebooks]
+
+[repl.analysis]
+passes = ["check_checker"]
+check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }

@@ -9,14 +9,14 @@
 )
 
 (define-read-only (check-job)
-  (let ((reward-cycle (contract-call? .boombox-admin current-cycle))
-        (start-of-cycle (contract-call? .boombox-admin reward-cycle-to-burn-height reward-cycle)))
+  (let ((reward-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-2 current-pox-reward-cycle))
+        (start-of-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-2 reward-cycle-to-burn-height reward-cycle)))
     (asserts! (> burn-block-height (+ u2000 start-of-cycle)) (ok false))
     (asserts! (is-none (map-get? commits (+ u1 reward-cycle))) (ok false))
     (ok true)))
 
 (define-public (run-job)
-  (let ((next-cycle (+ u1 (contract-call? .boombox-admin current-cycle))))
+  (let ((next-cycle (+ u1 (contract-call? 'SP000000000000000000002Q6VF78.pox-2 current-pox-reward-cycle))))
     (asserts! (unwrap-panic (check-job)) (ok false))
     (map-insert commits next-cycle block-height)
     (contract-call? .boombox-admin stack-aggregation-commit pox-addr next-cycle)))
