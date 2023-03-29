@@ -1,10 +1,10 @@
-;; Boombox 50
-;; b-52
+;; Boombox 56
+;; b-56
 
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 (impl-trait .boombox-trait.boombox-trait)
 
-(define-non-fungible-token b-52 uint)
+(define-non-fungible-token b-56 uint)
 
 ;; Constants
 (define-constant DEPLOYER tx-sender)
@@ -21,26 +21,18 @@
 
 ;; Variables
 (define-data-var last-id uint u0)
-(define-data-var artist-address principal 'SP21CYC2GKWTVK3FHFF4VVJNKVNQDMRY5GQS27XQB)
-(define-data-var commission-address principal 'SP3QC4R6M7M0DAZBXSZCW4FWGDCNDD05FV8Y0AY8C)
-(define-data-var boombox-admin principal 'SP1QK1AZ24R132C0D84EEQ8Y2JDHARDR58R72E1ZW.boombox-admin-v3)
+(define-data-var artist-address principal 'SP20PH0DGKC576ERKCR2VT21NRP5YPK291N2X93MX)
+(define-data-var boombox-admin principal 'SPMS4E9RQ4GCGG68R6D15PKV01TYNCBPYZG1ZMFE.boombox-admin-v5
 
 ;; Maps
 (define-map boombox-id principal uint);; boombox-admin contract : boombox id
 (define-map token-count principal uint)
 (define-map market uint {price: uint, commission: principal})
 
-
-;; Public helper functions
-(define-public (set-commision-address (address principal))
-  (begin
-    (asserts! (or (is-eq tx-sender (var-get artist-address)) (is-eq tx-sender DEPLOYER)) (err ERR-INVALID-USER))
-    (ok (var-set commission-address address))))
-
 (define-public (burn (token-id uint))
   (begin
     (asserts! (is-owner token-id tx-sender) (err ERR-NOT-AUTHORIZED))
-    (nft-burn? b-52 token-id tx-sender)))
+    (nft-burn? b-56 token-id tx-sender)))
 
 ;; adds the ability to set a custom event message
 (define-public (transfer-memo (id uint) (sender principal) (recipient principal) (memo (buff 34)))
@@ -60,7 +52,7 @@
   (let ((next-id (+ u1 (var-get last-id))))
     (asserts! (is-eq bb-id (unwrap! (map-get? boombox-id contract-caller) (err ERR-NOT-AUTHORIZED))) (err ERR-NOT-AUTHORIZED))
     (var-set last-id next-id)
-    (try! (nft-mint? b-52 next-id stacker))
+    (try! (nft-mint? b-56 next-id stacker))
     (ok next-id)))
 
 ;; SIP-009 functions
@@ -72,22 +64,22 @@
   (begin
     (asserts! (is-none (map-get? market token-id)) (err ERR-LISTING))
     (asserts! (is-eq tx-sender sender) (err ERR-INVALID-USER))
-    (nft-transfer? b-52 token-id sender recipient)))
+    (nft-transfer? b-56 token-id sender recipient)))
 
 (define-read-only (get-owner (token-id uint))
-  (ok (nft-get-owner? b-52 token-id)))
+  (ok (nft-get-owner? b-56 token-id)))
 
 (define-read-only (get-token-uri (id uint))
-  (ok (some "ipfs://bafkreideogan5eeypcnxwtlxi4llz74r77mdsbf6xkqdmupnhqpcpu5nrm")))
+  (ok (some "ipfs://bafkreidgzdhb2yhe7vplc5ntkyj7ifr5d6mgow2kuahphooh5njt6lclbi")))
 
 ;; Private helper functions
 (define-private (is-owner (token-id uint) (user principal))
-    (is-eq user (unwrap! (nft-get-owner? b-52 token-id) false)))
+    (is-eq user (unwrap! (nft-get-owner? b-56 token-id) false)))
 
 ;; Read-only functions
 (define-read-only (get-owner-at-block (token-id uint) (stacks-tip uint))
   (match (get-block-info? id-header-hash stacks-tip)
-    block (ok (at-block block (nft-get-owner? b-52 token-id)))
+    block (ok (at-block block (nft-get-owner? b-56 token-id)))
     ERR-INVALID-STACKS-TIP))
 
 
@@ -101,7 +93,7 @@
     (map-get? token-count account)))
 
 (define-private (trnsfr (id uint) (sender principal) (recipient principal))
-  (match (nft-transfer? b-52 id sender recipient)
+  (match (nft-transfer? b-56 id sender recipient)
     success
       (let
         ((sender-balance (get-balance sender))
@@ -116,7 +108,7 @@
     error (err error)))
 
 (define-private (is-sender-owner (id uint))
-  (let ((owner (unwrap! (nft-get-owner? b-52 id) false)))
+  (let ((owner (unwrap! (nft-get-owner? b-56 id) false)))
     (or (is-eq tx-sender owner) (is-eq contract-caller owner))))
 
 (define-read-only (get-listing-in-ustx (id uint))
@@ -143,7 +135,7 @@
     (ok true)))
 
 (define-public (buy-in-ustx (id uint) (comm-trait <commission-trait>))
-  (let ((owner (unwrap! (nft-get-owner? b-52 id) (err ERR-NOT-FOUND)))
+  (let ((owner (unwrap! (nft-get-owner? b-56 id) (err ERR-NOT-FOUND)))
       (listing (unwrap! (map-get? market id) (err ERR-LISTING)))
       (price (get price listing)))
     (asserts! (is-eq (contract-of comm-trait) (get commission listing)) (err ERR-WRONG-COMMISSION))
