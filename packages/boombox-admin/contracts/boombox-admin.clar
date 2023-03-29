@@ -315,7 +315,7 @@
     err-invalid-stacks-tip))
 
 (define-read-only (can-extend-now (cycle uint))
-  (> burn-block-height (+ (contract-call? 'ST000000000000000000002AMW42H.pox-2 reward-cycle-to-burn-height cycle) half-cycle-length)))
+  (> burn-block-height (+ (contract-call? 'SP000000000000000000002Q6VF78.pox-2 reward-cycle-to-burn-height cycle) half-cycle-length)))
 
 ;; What's the reward cycle number of the burnchain block height?
 ;; Will runtime-abort if height is less than the first burnchain block (this is intentional)
