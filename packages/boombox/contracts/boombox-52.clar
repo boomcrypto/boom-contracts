@@ -45,12 +45,10 @@
         (map-get? approvals-all {owner: owner, operator: operator}))
           (map-get? approvals {owner: owner, operator: operator, id: id}))))
 
-;; public functions
-;;
-
-;; operable functions
 (use-trait commission-trait 'SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.commission-trait.commission)
 
+;; public functions
+;;
 (define-read-only (get-balance (account principal))
   (default-to u0
     (map-get? token-count account)))

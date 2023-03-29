@@ -1,6 +1,7 @@
 
 settings/Mainnet.toml
 settings/Testnet.toml
+packages/boombox-admin/settings/Mainnet.toml
 history.txt
 .idea
 
