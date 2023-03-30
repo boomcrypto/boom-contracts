@@ -1,3 +1,6 @@
+;; This contract is used to distribute STX to the artists/owner of a Boombox NFT
+;; This distribution trait allocates 100% of the STX to the Boombox creator
+
 (define-constant artist 'SP000000000000000000002Q6VF78)
 
 (define-public (distribute (nft-id uint) (amount uint) (stacks-tip uint))
