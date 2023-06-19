@@ -61,7 +61,7 @@
   { until-burn-ht: (optional uint)})
 
 ;; Half cycle lenght is 1050 for mainnet
-(define-constant half-cycle-length (/ (get reward-cycle-length (unwrap-panic (contract-call? 'SP000000000000000000002Q6VF78.pox-2 get-pox-info))) u2))
+(define-constant half-cycle-length (/ (get reward-cycle-length (unwrap-panic (contract-call? 'SP000000000000000000002Q6VF78.pox-3 get-pox-info))) u2))
 
 ;;
 ;; error handling
@@ -89,7 +89,7 @@
 (define-constant err-entry-exists (err u611))
 (define-constant err-cycle-full (err u612))
 (define-constant err-invalid-boombox (err u614))
-;; Error code 9 is used by pox-2 contract
+;; Error code 9 is used by pox-3 contract
 (define-constant err-stacking-permission-denied (err u709))
 
 ;; @desc adds a boombox contract to the list of boomboxes
@@ -102,7 +102,7 @@
                     (minimum-amount uint) (pox-addr {version: (buff 1), hashbytes: (buff 32)})
                     (owner principal) (distribution-rules <distribution-trait>))
   (let ((fq-contract (contract-of nft-contract))
-        (current-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-2 current-pox-reward-cycle))
+        (current-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-3 current-pox-reward-cycle))
         (id (+ u1 (var-get last-id))))
     (asserts! (>= cycle current-cycle) err-too-late)
     (asserts! (map-insert boombox-by-contract {fq-contract: fq-contract, cycle: cycle} id) err-entry-exists)
@@ -137,7 +137,7 @@
 
 (define-private (pox-delegate-stx-and-stack (amount-ustx uint) (pox-addr {version: (buff 1), hashbytes: (buff 32)}) (locking-period uint))
   (let ((user tx-sender)
-        (current-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-2 current-pox-reward-cycle)))
+        (current-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-3 current-pox-reward-cycle)))
       (asserts! (check-caller-allowed) err-stacking-permission-denied)
       ;; Do 1. and 2.
       (try! (delegate-stx-inner amount-ustx (as-contract tx-sender) none))
@@ -153,9 +153,9 @@
 (define-private (delegate-stx-inner (amount-ustx uint) (delegate-to principal) (until-burn-ht (optional uint)))
   (let ((result-revoke
             ;; Calls revoke and ignores result
-          (contract-call? 'SP000000000000000000002Q6VF78.pox-2 revoke-delegate-stx)))
+          (contract-call? 'SP000000000000000000002Q6VF78.pox-3 revoke-delegate-stx)))
     ;; Calls delegate-stx, converts any error to uint
-    (match (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stx amount-ustx delegate-to until-burn-ht none)
+    (match (contract-call? 'SP000000000000000000002Q6VF78.pox-3 delegate-stx amount-ustx delegate-to until-burn-ht none)
       success (ok success)
       error (err (* u1000 (to-uint error))))))
 
@@ -166,7 +166,7 @@
         (user-account (stx-account user))
         (allowed-amount (min (get-delegated-amount user) (+ (get locked user-account) (get unlocked user-account))))
         (amount-ustx (if (> allowed-amount stx-buffer) (- allowed-amount stx-buffer) allowed-amount)))
-    (match (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stack-stx
+    (match (contract-call? 'SP000000000000000000002Q6VF78.pox-3 delegate-stack-stx
              user amount-ustx
              pox-addr start-burn-ht locking-period)
       stacker-details  (ok stacker-details)
@@ -176,7 +176,7 @@
 
 
 
-;; Calls pox-2 delegate-stack-extend and delegate-stack-increase.
+;; Calls pox-3 delegate-stack-extend and delegate-stack-increase.
 ;; parameter amount-ustx must be lower or equal the stx balance and the delegated amount
 (define-private (delegate-stack-extend-increase (user principal)
                   (amount-ustx uint)
@@ -184,11 +184,11 @@
                   (start-burn-ht uint))
   (let ((status (stx-account user)))
     (asserts! (>= amount-ustx (get locked status)) err-decrease-forbidden)
-    (match (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stack-extend
+    (match (contract-call? 'SP000000000000000000002Q6VF78.pox-3 delegate-stack-extend
              user pox-address u1)
       success (if (> amount-ustx (get locked status))
-                (match (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stack-increase
-                         user pox-address (- amount-ustx (get locked status)))
+                (match (contract-call? 'SP000000000000000000002Q6VF78.pox-3 delegate-stack-increase
+                         user pox-address (- amount-ustx (get locked status))) 
                   success-increase (ok {lock-amount: (get total-locked success-increase),
                                         stacker: user,
                                         unlock-burn-height: (get unlock-burn-height success)})
@@ -201,7 +201,7 @@
 ;; Tries to calls stack aggregation commit. If the minimum is met,
 ;; subsequent calls increase the total amount using
 ;; the index of the first successful call.
-;; This index gives access to the internal map of the pox-2 contract
+;; This index gives access to the internal map of the pox-3 contract
 ;; that handles the reward addresses.
 (define-private (maybe-stack-aggregation-commit (pox-addr {hashbytes: (buff 32), version: (buff 1)}) (current-cycle uint))
   (let ((reward-cycle (+ u1 current-cycle)))
@@ -209,12 +209,12 @@
             ;; Total stacked already reached minimum.
             ;; Call stack-aggregate-increase.
             ;; It might fail because called in the same cycle twice.
-      index (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 stack-aggregation-increase pox-addr reward-cycle index))
+      index (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-3 stack-aggregation-increase pox-addr reward-cycle index))
               success (map-set last-aggregation {pox-addr: pox-addr, reward-cycle: reward-cycle} block-height)
               error (begin (print {err-increase-ignored: error}) false))
             ;; Total stacked is still below minimum.
             ;; Just try to commit, it might fail because minimum not yet met
-      (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 stack-aggregation-commit-indexed pox-addr reward-cycle))
+      (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-3 stack-aggregation-commit-indexed pox-addr reward-cycle))
         index (begin
                 (map-set pox-addr-indices {pox-addr: pox-addr, reward-cycle: reward-cycle} index)
                 (map-set last-aggregation {pox-addr: pox-addr, reward-cycle: reward-cycle} block-height))
@@ -260,18 +260,18 @@
     (stacker (get stacker details))
     (pox-addr (get pox-addr (unwrap! (element-at? (var-get boombox-list) (- id u1)) err-not-found))))
       (asserts! (check-caller-allowed) err-stacking-permission-denied)
-      (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stack-increase stacker pox-addr amount-increase))
+      (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-3 delegate-stack-increase stacker pox-addr amount-increase))
       success (ok success)
       error (err (to-uint error)))))
 
 ;; any user can extend after half of the cycle
-(define-public (extend-stacking (id uint) (nft-id uint) (fq-contract <bb-trait>) (lock-period uint))
+(define-public (extend-stacking (id uint) (nft-id uint) (fq-contract <bb-trait>) (lock-period uint)) ;; TODO: lock-period should be an extend count
   (let ((details (unwrap! (map-get? meta {id: id, nft-id: nft-id}) err-not-found))
           (stacker (get stacker details))
-          (current-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-2 current-pox-reward-cycle))
+          (current-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-3 current-pox-reward-cycle))
           (pox-addr (get pox-addr (unwrap! (element-at? (var-get boombox-list) (- id u1)) err-not-found))))
       (asserts! (can-extend-now current-cycle) err-too-early)
-      (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-2 delegate-stack-extend stacker pox-addr lock-period))
+      (match (as-contract (contract-call? 'SP000000000000000000002Q6VF78.pox-3 delegate-stack-extend stacker pox-addr lock-period)) ;; TODO: lock-period should be an extend count
       success (ok success)
       error (err (to-uint error)))))
 
@@ -301,7 +301,7 @@
 
 
 (define-read-only (get-delegated-amount (user principal))
-  (default-to u0 (get amount-ustx (contract-call? 'SP000000000000000000002Q6VF78.pox-2 get-delegation-info user))))
+  (default-to u0 (get amount-ustx (contract-call? 'SP000000000000000000002Q6VF78.pox-3 get-delegation-info user))))
 
 (define-read-only (get-total-stacked (id uint))
   (map-get? total-stacked id))
@@ -315,16 +315,16 @@
     err-invalid-stacks-tip))
 
 (define-read-only (can-extend-now (cycle uint))
-  (> burn-block-height (+ (contract-call? 'SP000000000000000000002Q6VF78.pox-2 reward-cycle-to-burn-height cycle) half-cycle-length)))
+  (> burn-block-height (+ (contract-call? 'SP000000000000000000002Q6VF78.pox-3 reward-cycle-to-burn-height cycle) half-cycle-length)))
 
 ;; What's the reward cycle number of the burnchain block height?
 ;; Will runtime-abort if height is less than the first burnchain block (this is intentional)
 (define-read-only (burn-height-to-reward-cycle (height uint))
-    (contract-call? 'SP000000000000000000002Q6VF78.pox-2 burn-height-to-reward-cycle height))
+    (contract-call? 'SP000000000000000000002Q6VF78.pox-3 burn-height-to-reward-cycle height))
 
 ;; What's the block height at the start of a given reward cycle?
 (define-read-only (reward-cycle-to-burn-height (cycle uint))
-  (contract-call? 'SP000000000000000000002Q6VF78.pox-2 reward-cycle-to-burn-height cycle))
+  (contract-call? 'SP000000000000000000002Q6VF78.pox-3 reward-cycle-to-burn-height cycle))
 
 (define-private (append-to-boombox-list (details {id: uint, fq-contract: principal,
     cycle: uint,
